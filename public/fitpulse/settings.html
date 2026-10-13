@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Settings — FitPulse</title>
+<meta name="description" content="Theme, units, notifications, privacy, password and data export settings for FitPulse." />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+<main class="page"><div class="container container-narrow stack">
+  <div><span class="eyebrow">Settings</span><h2 style="margin-top:12px">Preferences</h2></div>
+  <div class="card stack">
+    <div class="row-between"><div><strong>Dark mode</strong><p class="small muted">Easier on the eyes at night.</p></div><label class="switch"><input type="checkbox" id="dark" /><span></span></label></div>
+    <div class="row-between"><div><strong>Reminders</strong><p class="small muted">Water and meal nudges.</p></div><label class="switch"><input type="checkbox" id="notif" /><span></span></label></div>
+    <div class="row-between"><div><strong>Public profile</strong><p class="small muted">Let friends see your streak.</p></div><label class="switch"><input type="checkbox" id="pub" /><span></span></label></div>
+    <div class="row-between"><div><strong>Units</strong></div><div class="segmented" id="units"><button data-u="metric">Metric</button><button data-u="imperial">Imperial</button></div></div>
+  </div>
+  <div class="card">
+    <div class="card-title"><h3>Change password</h3></div>
+    <form id="pw">
+      <div class="field"><label>Current password</label><input class="input" type="password" id="cur" /></div>
+      <div class="field"><label>New password</label><input class="input" type="password" id="nw" /></div>
+      <button class="btn">Update password</button>
+    </form>
+  </div>
+  <div class="card stack">
+    <div class="card-title"><h3>Your data</h3></div>
+    <div class="row"><button class="btn btn-ghost" id="export">Export my data (JSON)</button><button class="btn btn-ghost" id="reset">Reset demo data</button></div>
+    <hr class="divider" />
+    <button class="btn btn-danger" id="del">Delete my account</button>
+  </div>
+</div></main>
+<script src="js/app.js"></script>
+<script src="js/auth.js"></script>
+<script>
+if (requireAuth()) {
+  const s = Store.get().settings, email = currentUser().email;
+  $("#dark").checked = document.documentElement.getAttribute("data-theme") === "dark";
+  $("#notif").checked = s.notifications; $("#pub").checked = s.publicProfile;
+  $("#dark").onchange = (e) => applyTheme(e.target.checked ? "dark" : "light");
+  const setS = (k, v) => { Store.update((x) => (x.settings[k] = v)); toast("Saved"); };
+  $("#notif").onchange = (e) => setS("notifications", e.target.checked);
+  $("#pub").onchange = (e) => setS("publicProfile", e.target.checked);
+  const units = () => $$("#units button").forEach((b) => b.classList.toggle("active", b.dataset.u === Store.get().settings.units));
+  $$("#units button").forEach((b) => b.onclick = () => { setS("units", b.dataset.u); units(); }); units();
+  $("#pw").onsubmit = (e) => {
+    e.preventDefault();
+    const st = Store.get(), u = st.users.find((x) => x.email === email);
+    if (u.pass !== weakHash($("#cur").value)) return toast("Current password is wrong.", "err");
+    if ($("#nw").value.length < 8) return toast("New password needs 8+ characters.", "err");
+    u.pass = weakHash($("#nw").value); Store.set(st); e.target.reset(); toast("Password updated");
+  };
+  $("#export").onclick = () => {
+    const st = Store.get();
+    const blob = new Blob([JSON.stringify({ profile: st.profiles[email], logs: st.logs[email] }, null, 2)], { type: "application/json" });
+    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "fitpulse-data.json"; a.click();
+  };
+  $("#reset").onclick = async () => { if (await confirmDialog("Reset demo data?", "All local data will be replaced with the demo seed.", "Reset")) { Store.reset(); seedDemo(true); location.href = "login.html"; } };
+  $("#del").onclick = async () => {
+    if (!(await confirmDialog("Delete account?", "This permanently removes your profile and logs from this device.", "Delete"))) return;
+    Store.update((x) => { x.users = x.users.filter((u) => u.email !== email); delete x.profiles[email]; delete x.logs[email]; x.session = null; });
+    location.href = "index.html";
+  };
+}
+</script>
+</body>
+</html>

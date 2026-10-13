@@ -1,0 +1,469 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Support & Help Center — FitPulse</title>
+<meta name="description" content="Get help with your FitPulse account, report issues, submit feedback, or manage support tickets." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body data-footer="on">
+<main class="page">
+  <div class="container stack">
+    <div class="row-between" style="flex-wrap:wrap;gap:16px">
+      <div>
+        <span class="eyebrow">Help Center</span>
+        <h1 style="margin-top:12px;font-size:clamp(2rem,3.5vw,2.8rem)">Support & Tickets</h1>
+        <p class="lead small" style="margin-top:4px">We reply to all inquiries within 24 hours. Premium members receive priority routing.</p>
+      </div>
+      <div class="row">
+        <button class="btn" id="newTicketBtn">+ Create Support Ticket</button>
+      </div>
+    </div>
+
+    <!-- Quick Stats & Status -->
+    <div class="grid g4" id="ticketStatsGrid">
+      <div class="card stat-tile"><span class="label">Total Inquiries</span><span class="stat-value" id="stTotal">0</span></div>
+      <div class="card stat-tile"><span class="label">Open Tickets</span><span class="stat-value" id="stOpen">0</span></div>
+      <div class="card stat-tile"><span class="label">Pending Action</span><span class="stat-value" id="stPending">0</span></div>
+      <div class="card stat-tile"><span class="label">Resolved</span><span class="stat-value" id="stClosed">0</span></div>
+    </div>
+
+    <!-- TICKET LIST / MANAGEMENT -->
+    <div class="card">
+      <div class="row-between" style="flex-wrap:wrap;gap:12px;margin-bottom:16px">
+        <div class="row" style="gap:10px;align-items:center">
+          <h3>Your Tickets</h3>
+          <span class="badge" id="roleBadge">Member View</span>
+        </div>
+        <div class="row" style="gap:10px">
+          <input class="input" id="searchTickets" placeholder="Search ticket or subject…" style="max-width:220px" />
+          <select class="select" id="filterStatus" style="width:auto">
+            <option value="">All Statuses</option>
+            <option value="open">Open</option>
+            <option value="pending">Pending</option>
+            <option value="closed">Closed</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table class="tbl" id="ticketsTable"></table>
+      </div>
+    </div>
+
+    <!-- SELF-SERVICE FAQ ACCORDION -->
+    <div class="card card-pad-lg">
+      <div class="row-between" style="margin-bottom:16px">
+        <div>
+          <h3>Frequently Answered Questions</h3>
+          <p class="small muted">Quick answers before opening a ticket</p>
+        </div>
+      </div>
+      <div class="stack" id="faqAccordion" style="gap:10px">
+        <div class="faq-item">
+          <button class="faq-q">How do I change my calorie or macro goals?<span class="brand-mark">+</span></button>
+          <div class="faq-a"><p>Go to Profile → Edit details. Changing your goal (Weight Loss, Maintenance, Muscle Gain) or updating your weight automatically recalculates targets based on the scientific Mifflin-St Jeor equation.</p></div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q">Where is my data saved?<span class="brand-mark">+</span></button>
+          <div class="faq-a"><p>FitPulse securely persists your data to our backend database and synchronizes with your device for instant offline availability.</p></div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q">Can I request new foods or exercises?<span class="brand-mark">+</span></button>
+          <div class="faq-a"><p>Yes! You can add custom foods directly in the Nutrition diary or submit a feature request ticket right here. Our nutritionist team verifies and adds popular Indian dishes weekly.</p></div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q">How does subscription renewal and cancellation work?<span class="brand-mark">+</span></button>
+          <div class="faq-a"><p>You can cancel your subscription at any time on the Subscription page. You will maintain full Premium access until the end of your billing cycle.</p></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONTACT BANNER -->
+    <div class="card card-accent row-between" style="flex-wrap:wrap;gap:16px;padding:22px">
+      <div>
+        <h3>Direct Contact & Urgent Issues</h3>
+        <p class="small" style="margin-top:4px">For billing disputes or urgent technical questions, reach our founders directly at <strong>hello@fitpulse.app</strong>.</p>
+      </div>
+      <a href="contact.html" class="btn btn-dark btn-sm">Contact Page →</a>
+    </div>
+
+  </div>
+</main>
+
+<!-- CREATE TICKET MODAL -->
+<div class="modal" id="newTicketModal">
+  <div class="modal-panel">
+    <div class="modal-head">
+      <div>
+        <h3>Create Support Ticket</h3>
+        <p class="small muted">Describe your question or issue in detail</p>
+      </div>
+      <button class="icon-btn" data-close>✕</button>
+    </div>
+    <form id="newTicketForm" style="margin-top:14px">
+      <div class="field">
+        <label for="ticketSubject">Subject *</label>
+        <input class="input" id="ticketSubject" placeholder="e.g. Issue logging custom recipe" required />
+      </div>
+      <div class="form-grid">
+        <div class="field">
+          <label for="ticketCategory">Category</label>
+          <select class="select" id="ticketCategory">
+            <option value="Technical">Technical / Bug</option>
+            <option value="Billing">Billing & Subscription</option>
+            <option value="Nutrition">Nutrition & Food Database</option>
+            <option value="Feedback">Feature Request / Feedback</option>
+            <option value="Account">Account Settings</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="ticketPriority">Priority</label>
+          <select class="select" id="ticketPriority">
+            <option value="low">Low</option>
+            <option value="medium" selected>Medium</option>
+            <option value="high">High (Urgent)</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label for="ticketMsg">Detailed Message *</label>
+        <textarea class="textarea" id="ticketMsg" rows="4" placeholder="Explain what happened or what you need assistance with…" required></textarea>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-ghost" data-close>Cancel</button>
+        <button type="submit" class="btn">Submit Ticket</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- VIEW / REPLY TICKET MODAL -->
+<div class="modal" id="ticketDetailModal">
+  <div class="modal-panel" style="max-width:640px">
+    <div class="modal-head">
+      <div>
+        <div class="row" style="gap:8px;align-items:center">
+          <h3 id="tdId">TK-1001</h3>
+          <span class="badge" id="tdStatusBadge">Open</span>
+          <span class="badge badge-muted" id="tdPriorityBadge">Medium</span>
+        </div>
+        <p class="small bold" id="tdSubject" style="margin-top:4px;color:var(--text)"></p>
+        <p class="tiny muted" id="tdMeta"></p>
+      </div>
+      <button class="icon-btn" data-close>✕</button>
+    </div>
+
+    <!-- Conversation Messages Thread -->
+    <div class="stack" id="tdMessagesLog" style="gap:12px;max-height:300px;overflow-y:auto;margin:16px 0;padding:12px;background:var(--surface-2);border-radius:var(--r);border:1px solid var(--border)">
+    </div>
+
+    <!-- Reply input -->
+    <form id="tdReplyForm">
+      <div class="field">
+        <label for="tdReplyText">Add Reply</label>
+        <textarea class="textarea" id="tdReplyText" rows="2" placeholder="Type your reply here…" required></textarea>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-ghost btn-sm" id="tdCloseTicketBtn">Close Ticket</button>
+        <button type="submit" class="btn btn-sm">Send Reply</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="js/app.js"></script>
+<script src="js/auth.js"></script>
+<script>
+if (requireAuth()) {
+  const isAdm = isAdmin();
+  const u = currentUser();
+  let currentTicket = null;
+
+  if (isAdm) {
+    $("#roleBadge").textContent = "Admin Mode (All Tickets)";
+    $("#roleBadge").className = "badge badge-ok";
+  }
+
+  let liveTickets = [];
+
+  async function syncTickets() {
+    if (typeof FP_CONFIG !== "undefined" && FP_CONFIG.API_BASE_URL) {
+      try {
+        const res = await api("/tickets", null, "GET");
+        if (res && res.ok && Array.isArray(res.data)) {
+          liveTickets = res.data.map(t => ({
+            id: t.id,
+            email: t.email,
+            name: t.name || t.email,
+            subject: t.subject,
+            category: t.category,
+            priority: t.priority,
+            status: t.status,
+            created: t.created_at || t.created,
+            messages: Array.isArray(t.messages) ? t.messages : (typeof t.messages_json === "string" ? JSON.parse(t.messages_json || "[]") : [])
+          }));
+          renderStats();
+          renderTable();
+          return;
+        }
+      } catch (e) {
+        console.warn("Failed to fetch live tickets, using local fallback", e);
+      }
+    }
+    const s = Store.get();
+    s.tickets = s.tickets || [];
+    liveTickets = isAdm ? s.tickets : s.tickets.filter(t => t.email === u.email);
+    renderStats();
+    renderTable();
+  }
+
+  function getTicketsList() {
+    return liveTickets;
+  }
+
+  function renderStats() {
+    const list = getTicketsList();
+    const open = list.filter(t => t.status === "open").length;
+    const pend = list.filter(t => t.status === "pending").length;
+    const closed = list.filter(t => t.status === "closed").length;
+    $("#stTotal").textContent = list.length;
+    $("#stOpen").textContent = open;
+    $("#stPending").textContent = pend;
+    $("#stClosed").textContent = closed;
+  }
+
+  function renderTable() {
+    const q = $("#searchTickets").value.toLowerCase();
+    const f = $("#filterStatus").value;
+    const tickets = getTicketsList().filter(t => {
+      const matchQ = (t.id + " " + t.subject + " " + (t.name || "") + " " + t.category).toLowerCase().includes(q);
+      const matchF = !f || t.status === f;
+      return matchQ && matchF;
+    });
+
+    const statusBadges = {
+      open: "badge-danger",
+      pending: "badge-warn",
+      closed: "badge-ok"
+    };
+
+    $("#ticketsTable").innerHTML = `
+      <thead>
+        <tr>
+          <th>ID</th>
+          ${isAdm ? "<th>Member</th>" : ""}
+          <th>Subject</th>
+          <th>Category</th>
+          <th>Priority</th>
+          <th>Status</th>
+          <th>Created</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        ${tickets.length ? tickets.map(t => `
+          <tr>
+            <td><strong class="num">${t.id}</strong></td>
+            ${isAdm ? `<td>${escapeHtml(t.name || t.email)}</td>` : ""}
+            <td><strong class="small">${escapeHtml(t.subject)}</strong></td>
+            <td><span class="badge badge-muted">${t.category}</span></td>
+            <td><span class="badge ${t.priority === 'high' ? 'badge-danger' : t.priority === 'medium' ? 'badge-warn' : 'badge-muted'}">${t.priority}</span></td>
+            <td><span class="badge ${statusBadges[t.status] || 'badge-muted'}">${t.status}</span></td>
+            <td>${fmtDate(t.created)}</td>
+            <td class="tbl-actions">
+              <button class="btn btn-sm btn-soft" data-view="${t.id}">View Thread</button>
+            </td>
+          </tr>
+        `).join("") : `<tr><td colspan="${isAdm ? 8 : 7}" class="empty">No support tickets found.</td></tr>`}
+      </tbody>
+    `;
+
+    $$("[data-view]").forEach(b => {
+      b.onclick = () => openTicketDetail(b.dataset.view);
+    });
+  }
+
+  function openTicketDetail(ticketId) {
+    const list = getTicketsList();
+    currentTicket = list.find(t => t.id === ticketId);
+    if (!currentTicket) return;
+
+    $("#tdId").textContent = currentTicket.id;
+    $("#tdSubject").textContent = currentTicket.subject;
+    $("#tdStatusBadge").textContent = (currentTicket.status || "open").toUpperCase();
+    $("#tdStatusBadge").className = "badge " + (currentTicket.status === 'open' ? 'badge-danger' : currentTicket.status === 'pending' ? 'badge-warn' : 'badge-ok');
+    $("#tdPriorityBadge").textContent = (currentTicket.priority || "Medium").toUpperCase();
+    $("#tdMeta").textContent = `Category: ${currentTicket.category} · Created: ${fmtDate(currentTicket.created)} · By: ${currentTicket.name || currentTicket.email}`;
+
+    renderMessagesThread();
+
+    $("#tdCloseTicketBtn").textContent = currentTicket.status === "closed" ? "Reopen Ticket" : "Close Ticket";
+    $("#tdCloseTicketBtn").onclick = async () => {
+      const nextStatus = currentTicket.status === "closed" ? "open" : "closed";
+      const res = await api("/tickets", {
+        id: currentTicket.id,
+        status: nextStatus,
+        reply: `[Ticket was marked ${nextStatus} by ${isAdm ? "Support Staff" : "Member"}]`
+      }, "PUT");
+
+      if (res && res.ok) {
+        toast(`Ticket is now ${nextStatus}`, "ok");
+        await syncTickets();
+        openTicketDetail(currentTicket.id);
+      } else {
+        Store.update(s => {
+          const t = s.tickets.find(x => x.id === currentTicket.id);
+          if (t) {
+            t.status = nextStatus;
+            t.messages = t.messages || [];
+            t.messages.push({
+              from: isAdm ? "admin" : "user",
+              text: `[Ticket was marked ${nextStatus}]`,
+              at: new Date().toISOString()
+            });
+            currentTicket = t;
+          }
+        });
+        renderStats();
+        renderTable();
+        renderMessagesThread();
+        $("#tdCloseTicketBtn").textContent = currentTicket.status === "closed" ? "Reopen Ticket" : "Close Ticket";
+        toast(`Ticket is now ${currentTicket.status}`);
+      }
+    };
+
+    openModal("#ticketDetailModal");
+  }
+
+  function renderMessagesThread() {
+    const msgs = currentTicket.messages || [];
+    $("#tdMessagesLog").innerHTML = msgs.map(m => {
+      const isStaff = m.from === "admin";
+      return `
+        <div style="display:flex;flex-direction:column;align-items:${isStaff ? 'flex-start' : 'flex-end'}">
+          <div style="max-width:85%;padding:10px 14px;border-radius:var(--r);background:${isStaff ? 'var(--surface-solid)' : 'var(--accent)'};color:${isStaff ? 'var(--text)' : '#fff'};border:1px solid var(--border)">
+            <div class="row-between" style="gap:12px;margin-bottom:4px">
+              <strong class="tiny">${isStaff ? '🛡️ FitPulse Support' : '👤 ' + (currentTicket.name || 'Member')}</strong>
+              <span class="tiny" style="opacity:0.75">${m.at ? new Date(m.at).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'}) : ''}</span>
+            </div>
+            <p class="small" style="line-height:1.5">${escapeHtml(m.text)}</p>
+          </div>
+        </div>
+      `;
+    }).join("");
+    $("#tdMessagesLog").scrollTop = 1e6;
+  }
+
+  $("#tdReplyForm").onsubmit = async (e) => {
+    e.preventDefault();
+    const replyText = $("#tdReplyText").value.trim();
+    if (!replyText) return;
+
+    const res = await api("/tickets", {
+      id: currentTicket.id,
+      reply: replyText,
+      status: isAdm ? "pending" : "open"
+    }, "PUT");
+
+    if (res && res.ok) {
+      $("#tdReplyText").value = "";
+      await syncTickets();
+      openTicketDetail(currentTicket.id);
+      toast("Reply posted", "ok");
+    } else {
+      Store.update(s => {
+        const t = s.tickets.find(x => x.id === currentTicket.id);
+        if (t) {
+          t.messages = t.messages || [];
+          t.messages.push({
+            from: isAdm ? "admin" : "user",
+            text: replyText,
+            at: new Date().toISOString()
+          });
+          if (!isAdm && t.status === "closed") t.status = "open";
+          if (isAdm && t.status === "open") t.status = "pending";
+          currentTicket = t;
+        }
+      });
+      $("#tdReplyText").value = "";
+      renderMessagesThread();
+      renderStats();
+      renderTable();
+      toast("Reply posted (offline)");
+    }
+  };
+
+  $("#newTicketBtn").onclick = () => {
+    $("#newTicketForm").reset();
+    openModal("#newTicketModal");
+  };
+
+  $("#newTicketForm").onsubmit = async (e) => {
+    e.preventDefault();
+    const subject = $("#ticketSubject").value.trim();
+    const category = $("#ticketCategory").value;
+    const priority = $("#ticketPriority").value;
+    const msg = $("#ticketMsg").value.trim();
+
+    if (!subject || !msg) return toast("Subject and message are required.", "err");
+
+    const submitBtn = $("#newTicketForm button[type='submit']");
+    if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = "Creating…"; }
+
+    const res = await api("/tickets", {
+      subject,
+      category,
+      priority,
+      message: msg,
+      email: u.email,
+      name: getUserProfile()?.name || u.name || "Member"
+    });
+
+    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = "Create Support Ticket"; }
+
+    closeModal("#newTicketModal");
+
+    if (res && res.ok) {
+      toast("Support ticket created (#" + (res.id || "") + ")", "ok");
+      await syncTickets();
+    } else {
+      const newTicket = {
+        id: "TK-" + Math.floor(1000 + Math.random() * 9000),
+        email: u.email,
+        name: getUserProfile()?.name || u.name || "Member",
+        subject,
+        category,
+        priority,
+        status: "open",
+        created: new Date().toISOString(),
+        messages: [
+          { from: "user", text: msg, at: new Date().toISOString() }
+        ]
+      };
+      Store.update(s => {
+        s.tickets = s.tickets || [];
+        s.tickets.unshift(newTicket);
+      });
+      toast("Support ticket created (#" + newTicket.id + ")");
+      renderStats();
+      renderTable();
+    }
+  };
+
+  $("#searchTickets").oninput = renderTable;
+  $("#filterStatus").onchange = renderTable;
+
+  $$(".faq-q").forEach(b => {
+    b.onclick = () => b.closest(".faq-item").classList.toggle("open");
+  });
+
+  syncTickets();
+}
+</script>
+</body>
+</html>

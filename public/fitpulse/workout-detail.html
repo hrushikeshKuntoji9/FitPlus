@@ -1,0 +1,338 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Workout Details & Guided Session — FitPulse</title>
+<meta name="description" content="Exercise breakdown, interactive timer, rest intervals, and workout tracker for your training session." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body data-footer="on">
+<main class="page">
+  <div class="container stack">
+    <div class="row-between">
+      <a href="workouts.html" class="small muted">← Back to Workout Library</a>
+      <div class="row" style="gap:8px">
+        <select class="select" id="workoutSelector" style="max-width:280px"></select>
+      </div>
+    </div>
+
+    <!-- WORKOUT HEADER CARD -->
+    <div class="card card-pad-lg">
+      <div class="row-between" style="flex-wrap:wrap;gap:20px;align-items:flex-start">
+        <div>
+          <div class="row" style="gap:10px;align-items:center">
+            <span style="font-size:2.4rem" id="wIcon">🏋️</span>
+            <div>
+              <h1 id="wTitle" style="font-size:clamp(1.8rem,3vw,2.5rem)">Full Body Strength</h1>
+              <div class="row" style="gap:8px;margin-top:6px">
+                <span class="badge" id="wCategory">Strength</span>
+                <span class="badge badge-ok" id="wLevel">Intermediate</span>
+                <span class="badge badge-muted" id="wEquipment">Equipment: Dumbbells</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row" style="gap:10px">
+          <button class="btn btn-lg" id="startSessionBtn">▶ Start Workout</button>
+        </div>
+      </div>
+
+      <!-- Quick Metrics -->
+      <div class="grid g4" style="margin-top:24px">
+        <div class="card stat-tile"><span class="label">Target Duration</span><span class="stat-value" id="valMinutes">45</span><span class="delta">minutes</span></div>
+        <div class="card stat-tile"><span class="label">Estimated Burn</span><span class="stat-value" id="valCalories">320</span><span class="delta">kcal</span></div>
+        <div class="card stat-tile"><span class="label">Target Focus</span><span class="stat-value" id="valFocus" style="font-size:1.4rem">Whole Body</span><span class="delta">muscle stimulus</span></div>
+        <div class="card stat-tile"><span class="label">Total Exercises</span><span class="stat-value" id="valCount">5</span><span class="delta">movements</span></div>
+      </div>
+    </div>
+
+    <!-- INTERACTIVE WORKOUT PLAYER & TIMER (Active state) -->
+    <div class="card card-pad-lg" id="playerCard" style="display:none;background:var(--surface-solid);border:2px solid var(--accent)">
+      <div class="row-between" style="flex-wrap:wrap;gap:16px">
+        <div>
+          <span class="badge badge-ok">SESSION IN PROGRESS</span>
+          <h2 style="margin-top:6px" id="playerCurrentExerciseTitle">Exercise 1 of 5</h2>
+          <p class="small muted" id="playerCurrentDetails">Target: 4 sets x 10 reps</p>
+        </div>
+        <div class="center">
+          <div class="stat-value" id="activeTimerDisplay" style="font-size:3.5rem;font-family:var(--font-display);color:var(--accent)">00:00</div>
+          <span class="tiny muted">Elapsed Time</span>
+        </div>
+      </div>
+
+      <!-- Controls -->
+      <div class="row-between" style="margin-top:20px;flex-wrap:wrap;gap:12px;padding-top:16px;border-top:1px solid var(--border)">
+        <div class="row" style="gap:8px">
+          <button class="btn btn-ghost" id="pauseTimerBtn">Pause</button>
+          <button class="btn btn-soft" id="restTimerBtn">⏱ 60s Rest Timer</button>
+        </div>
+        <div class="row" style="gap:8px">
+          <button class="btn btn-soft" id="nextExerciseBtn">Next Exercise →</button>
+          <button class="btn btn-ok" id="finishWorkoutBtn">✓ Complete & Log Workout</button>
+        </div>
+      </div>
+
+      <!-- Rest Countdown Bar -->
+      <div id="restCountdownBox" style="display:none;margin-top:16px;padding:12px 16px;background:var(--accent-soft);border-radius:var(--r);text-align:center">
+        <strong style="color:var(--accent);font-size:1.1rem">Rest Interval: <span id="restSecs">60</span>s remaining</strong>
+      </div>
+    </div>
+
+    <!-- STEP-BY-STEP EXERCISES LIST -->
+    <div class="card card-pad-lg">
+      <div class="row-between" style="margin-bottom:16px">
+        <div>
+          <h2>Exercise Breakdown & Instructions</h2>
+          <p class="small muted">Check off sets as you complete them during your training</p>
+        </div>
+        <span class="badge" id="completionProgressBadge">0 of 5 Completed</span>
+      </div>
+
+      <div class="stack" id="exerciseItemsList" style="gap:14px">
+        <!-- Dynamically rendered -->
+      </div>
+    </div>
+
+    <!-- FORM & RECOVERY COACH TIPS -->
+    <div class="grid g2">
+      <div class="card">
+        <h3>Form & Execution Guide</h3>
+        <ul class="list" style="margin-top:10px;line-height:1.7">
+          <li class="list-item"><strong>Warm-up:</strong> Spend 3-5 minutes rotating shoulders and hips before loaded movements.</li>
+          <li class="list-item"><strong>Tempo:</strong> Lower weights with control (2 seconds down), explode up with intent.</li>
+          <li class="list-item"><strong>Rest Intervals:</strong> Rest 60-90s between compound sets to maintain force output.</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3>Post-Workout Nutrition</h3>
+        <p class="small" style="line-height:1.7;margin-top:10px;color:var(--text-soft)">
+          Fuel recovery within 60 minutes after finishing this session. Aim for 25-35g of protein (curd, whey, paneer, or chicken) combined with healthy complex carbs to replenish glycogen.
+        </p>
+        <a href="nutrition.html" class="btn btn-sm btn-soft" style="margin-top:14px">+ Log Post-Workout Fuel</a>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<script src="js/app.js"></script>
+<script src="js/auth.js"></script>
+<script>
+if (requireAuth()) {
+  let allWorkouts = [];
+  let currentWorkout = null;
+  let timerInterval = null;
+  let totalElapsedSeconds = 0;
+  let isTimerRunning = false;
+  let currentExIndex = 0;
+  let restInterval = null;
+  let completedExercises = new Set();
+
+  const ICONS_MAP = {
+    Strength: "🏋️",
+    HIIT: "🔥",
+    Cardio: "🏃",
+    Gym: "💪",
+    Yoga: "🧘",
+    Core: "🎯"
+  };
+
+  async function init() {
+    allWorkouts = await getWorkouts().catch(() => []);
+    if (!allWorkouts.length) return;
+
+    // Fill selector
+    $("#workoutSelector").innerHTML = allWorkouts.map(w => `
+      <option value="${w.id}">${escapeHtml(w.name)} (${w.minutes} min)</option>
+    `).join("");
+
+    const params = new URLSearchParams(location.search);
+    const paramId = params.get("id");
+    const paramName = params.get("name");
+
+    if (paramId) currentWorkout = allWorkouts.find(w => String(w.id) === paramId);
+    else if (paramName) currentWorkout = allWorkouts.find(w => w.name.toLowerCase() === paramName.toLowerCase());
+
+    if (!currentWorkout) currentWorkout = allWorkouts[0];
+
+    $("#workoutSelector").value = currentWorkout.id;
+    $("#workoutSelector").onchange = (e) => {
+      currentWorkout = allWorkouts.find(w => String(w.id) === e.target.value) || allWorkouts[0];
+      resetPlayer();
+      render();
+    };
+
+    bindControls();
+    render();
+  }
+
+  function render() {
+    if (!currentWorkout) return;
+
+    $("#wTitle").textContent = currentWorkout.name;
+    $("#wCategory").textContent = currentWorkout.category;
+    $("#wLevel").textContent = currentWorkout.level;
+    $("#wEquipment").textContent = "Equipment: " + (currentWorkout.equipment || "None");
+    $("#wIcon").textContent = ICONS_MAP[currentWorkout.category] || "⚡";
+
+    $("#valMinutes").textContent = currentWorkout.minutes;
+    $("#valCalories").textContent = currentWorkout.calories;
+    $("#valFocus").textContent = currentWorkout.focus || "General";
+    $("#valCount").textContent = currentWorkout.exercises.length;
+
+    renderExercisesList();
+  }
+
+  function renderExercisesList() {
+    const list = currentWorkout.exercises || [];
+    $("#completionProgressBadge").textContent = `${completedExercises.size} of ${list.length} Completed`;
+
+    $("#exerciseItemsList").innerHTML = list.map((ex, i) => {
+      const isDone = completedExercises.has(i);
+      return `
+        <div class="card ${isDone ? 'card-flat' : ''}" style="padding:16px;border-left:4px solid ${isDone ? 'var(--green-500)' : 'var(--accent)'}">
+          <div class="row-between" style="flex-wrap:wrap;gap:10px">
+            <div class="row" style="gap:12px;align-items:center">
+              <span class="li-icon" style="background:${isDone ? 'var(--green-500)' : 'var(--accent-soft)'};color:${isDone ? '#fff' : 'var(--accent)'};font-weight:700">${i + 1}</span>
+              <div>
+                <strong style="font-size:1.1rem;text-decoration:${isDone ? 'line-through' : 'none'}">${escapeHtml(ex)}</strong>
+                <p class="tiny muted" style="margin-top:2px">Rest 45-60s between sets · Maintain neutral spine and deep breathing</p>
+              </div>
+            </div>
+            <button class="btn btn-sm ${isDone ? 'btn-ghost' : 'btn-soft'}" data-toggle-ex="${i}">
+              ${isDone ? '✓ Completed' : 'Mark Done'}
+            </button>
+          </div>
+        </div>
+      `;
+    }).join("");
+
+    $$("[data-toggle-ex]").forEach(b => {
+      b.onclick = () => {
+        const idx = parseInt(b.dataset.toggleEx);
+        if (completedExercises.has(idx)) completedExercises.delete(idx);
+        else completedExercises.add(idx);
+        renderExercisesList();
+      };
+    });
+  }
+
+  function formatTime(s) {
+    const mins = Math.floor(s / 60).toString().padStart(2, "0");
+    const secs = (s % 60).toString().padStart(2, "0");
+    return `${mins}:${secs}`;
+  }
+
+  function resetPlayer() {
+    clearInterval(timerInterval);
+    clearInterval(restInterval);
+    timerInterval = null;
+    restInterval = null;
+    totalElapsedSeconds = 0;
+    isTimerRunning = false;
+    currentExIndex = 0;
+    completedExercises.clear();
+    $("#playerCard").style.display = "none";
+    $("#activeTimerDisplay").textContent = "00:00";
+    $("#startSessionBtn").textContent = "▶ Start Workout";
+  }
+
+  function bindControls() {
+    $("#startSessionBtn").onclick = () => {
+      $("#playerCard").style.display = "block";
+      $("#playerCard").scrollIntoView({ behavior: "smooth" });
+      startTimer();
+      updatePlayerInfo();
+    };
+
+    $("#pauseTimerBtn").onclick = () => {
+      if (isTimerRunning) {
+        clearInterval(timerInterval);
+        isTimerRunning = false;
+        $("#pauseTimerBtn").textContent = "Resume";
+      } else {
+        startTimer();
+      }
+    };
+
+    $("#restTimerBtn").onclick = () => {
+      startRestCountdown(60);
+    };
+
+    $("#nextExerciseBtn").onclick = () => {
+      completedExercises.add(currentExIndex);
+      if (currentExIndex < currentWorkout.exercises.length - 1) {
+        currentExIndex++;
+        updatePlayerInfo();
+        renderExercisesList();
+        startRestCountdown(45);
+      } else {
+        toast("All exercises completed! Finish and save workout.", "info");
+      }
+    };
+
+    $("#finishWorkoutBtn").onclick = () => {
+      const minutesSpent = Math.max(1, Math.round(totalElapsedSeconds / 60)) || currentWorkout.minutes;
+      const calBurned = Math.round((currentWorkout.calories / currentWorkout.minutes) * minutesSpent);
+
+      completeWorkout({
+        name: currentWorkout.name,
+        minutes: minutesSpent,
+        calories: calBurned,
+        category: currentWorkout.category
+      });
+
+      const hb = getHabits();
+      if (!hb.workout) toggleHabit("workout");
+
+      resetPlayer();
+      renderExercisesList();
+      toast(`🎉 Logged "${currentWorkout.name}" (${calBurned} kcal burned)!`);
+      setTimeout(() => {
+        location.href = "dashboard.html";
+      }, 1000);
+    };
+  }
+
+  function startTimer() {
+    isTimerRunning = true;
+    $("#pauseTimerBtn").textContent = "Pause";
+    timerInterval = setInterval(() => {
+      totalElapsedSeconds++;
+      $("#activeTimerDisplay").textContent = formatTime(totalElapsedSeconds);
+    }, 1000);
+  }
+
+  function startRestCountdown(seconds) {
+    clearInterval(restInterval);
+    let s = seconds;
+    $("#restCountdownBox").style.display = "block";
+    $("#restSecs").textContent = s;
+    restInterval = setInterval(() => {
+      s--;
+      $("#restSecs").textContent = s;
+      if (s <= 0) {
+        clearInterval(restInterval);
+        $("#restCountdownBox").style.display = "none";
+        toast("Rest over — start your next set! 🔥");
+      }
+    }, 1000);
+  }
+
+  function updatePlayerInfo() {
+    const list = currentWorkout.exercises || [];
+    $("#playerCurrentExerciseTitle").textContent = `Exercise ${currentExIndex + 1} of ${list.length}: ${list[currentExIndex] || ""}`;
+    $("#playerCurrentDetails").textContent = `Maintain steady controlled breathing and focus on mind-muscle connection.`;
+  }
+
+  init();
+}
+</script>
+</body>
+</html>

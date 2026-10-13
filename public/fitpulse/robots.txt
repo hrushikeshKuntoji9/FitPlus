@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+Allow: /fitpulse/
+Disallow: /api/
+Disallow: /fitpulse/admin.html
+Disallow: /fitpulse/manage-users.html
+Disallow: /fitpulse/manage-foods.html
+Disallow: /fitpulse/manage-workouts.html
+Disallow: /fitpulse/manage-subscriptions.html
+
+Sitemap: https://fitpulse.app/fitpulse/sitemap.xml

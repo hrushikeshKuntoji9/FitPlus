@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Payment failed — FitPulse</title>
+<meta name="description" content="Your FitPulse payment was not completed." />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+<main class="page">
+  <div class="container" style="max-width:640px">
+    <div class="card card-pad-lg center">
+      <h1>Payment not completed</h1>
+      <p class="lead" id="msg">No charge was applied to a membership. You can retry checkout or contact support if you were billed.</p>
+      <div class="row" style="justify-content:center;margin-top:24px">
+        <a href="checkout.html" class="btn btn-lg">Try again</a>
+        <a href="subscription.html" class="btn btn-ghost btn-lg">Back to plans</a>
+        <a href="support.html" class="btn btn-ghost btn-lg">Contact support</a>
+      </div>
+    </div>
+  </div>
+</main>
+<script src="js/app.js"></script>
+<script src="js/auth.js"></script>
+<script>
+const reason = new URLSearchParams(location.search).get("reason");
+if (reason) $("#msg").textContent = reason;
+</script>
+</body>
+</html>

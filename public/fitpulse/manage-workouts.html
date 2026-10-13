@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Manage workouts — FitPulse Admin</title>
+<meta name="description" content="Add, edit and remove workouts in the FitPulse library." />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body data-area="admin">
+<main class="page"><div class="container stack">
+  <div class="row-between"><div><span class="eyebrow">Admin</span><h2 style="margin-top:12px">Workout library</h2></div><button class="btn" id="add">+ Add workout</button></div>
+  <p class="small muted">Base workouts come from <code>data/workouts.json</code>. Workouts added here are stored as custom workouts.</p>
+  <div class="table-wrap"><table class="tbl" id="t"></table></div>
+</div></main>
+<div class="modal" id="m"><div class="modal-panel">
+  <div class="modal-head"><h3 id="mt">Add workout</h3><button class="icon-btn" data-close>✕</button></div>
+  <form id="form"><div class="form-grid">
+    <div class="field"><label>Name</label><input class="input" id="name" /></div>
+    <div class="field"><label>Category</label><select class="select" id="category"><option>Strength</option><option>HIIT</option><option>Cardio</option><option>Gym</option><option>Yoga</option><option>Core</option></select></div>
+    <div class="field"><label>Level</label><select class="select" id="level"><option>Beginner</option><option>Intermediate</option><option>Advanced</option></select></div>
+    <div class="field"><label>Minutes</label><input class="input" type="number" id="minutes" /></div>
+    <div class="field"><label>Calories</label><input class="input" type="number" id="calories" /></div>
+    <div class="field"><label>Equipment</label><input class="input" id="equipment" placeholder="None" /></div>
+  </div>
+  <div class="field"><label>Focus</label><input class="input" id="focus" placeholder="Full body" /></div>
+  <div class="field"><label>Exercises (one per line)</label><textarea class="textarea" id="exercises"></textarea></div>
+  <div class="modal-foot"><button type="button" class="btn btn-ghost" data-close>Cancel</button><button class="btn">Save</button></div></form>
+</div></div>
+<script src="js/app.js"></script>
+<script src="js/auth.js"></script>
+<script>
+if (requireAuth("admin")) {
+  let base = [], editing = null;
+  loadJSON("workouts.json").then((b) => { base = b; render(); });
+  function render() {
+    const custom = Store.get().customWorkouts || [];
+    const rows = [...custom.map((w) => ({ ...w, custom: true })), ...base];
+    $("#t").innerHTML = `<thead><tr><th>Name</th><th>Category</th><th>Level</th><th>Min</th><th>kcal</th><th>Exercises</th><th></th></tr></thead><tbody>` +
+      rows.map((w) => `<tr><td>${escapeHtml(w.name)} ${w.custom ? '<span class="badge">custom</span>' : ""}</td><td>${w.category}</td><td>${w.level}</td><td>${w.minutes}</td><td>${w.calories}</td><td>${w.exercises.length}</td>
+      <td class="tbl-actions">${w.custom ? `<button class="btn btn-sm btn-soft" data-ed="${w.id}">Edit</button><button class="btn btn-sm btn-danger" data-del="${w.id}">Delete</button>` : '<span class="tiny muted">base</span>'}</td></tr>`).join("") + "</tbody>";
+    $$("[data-ed]").forEach((b) => b.onclick = () => open(custom.find((w) => w.id === b.dataset.ed)));
+    $$("[data-del]").forEach((b) => b.onclick = async () => { if (await confirmDialog("Delete workout?", "Members will no longer see it.", "Delete")) { Store.update((s) => (s.customWorkouts = s.customWorkouts.filter((w) => w.id !== b.dataset.del))); toast("Deleted"); render(); } });
+  }
+  const K = ["name", "category", "level", "minutes", "calories", "equipment", "focus"];
+  function open(w) { editing = w || null; $("#mt").textContent = w ? "Edit workout" : "Add workout"; K.forEach((k) => ($("#" + k).value = w ? w[k] : k === "category" ? "Strength" : k === "level" ? "Beginner" : "")); $("#exercises").value = w ? w.exercises.join("\n") : ""; openModal("#m"); }
+  $("#add").onclick = () => open();
+  $("#form").onsubmit = (e) => {
+    e.preventDefault();
+    const w = { name: $("#name").value.trim(), category: $("#category").value, level: $("#level").value, minutes: +$("#minutes").value, calories: +$("#calories").value, equipment: $("#equipment").value || "None", focus: $("#focus").value || "General", exercises: $("#exercises").value.split("\n").map((x) => x.trim()).filter(Boolean) };
+    if (!w.name || !w.minutes || !w.exercises.length) return toast("Name, minutes and at least one exercise are required.", "err");
+    Store.update((s) => { s.customWorkouts = s.customWorkouts || []; if (editing) Object.assign(s.customWorkouts.find((x) => x.id === editing.id), w); else s.customWorkouts.unshift({ id: "w" + uid(), ...w }); });
+    closeModal("#m"); toast("Workout saved"); render();
+  };
+}
+</script>
+</body>
+</html>

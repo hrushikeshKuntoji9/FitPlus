@@ -1,0 +1,54 @@
+[
+  {
+    "id": 1,
+    "name": "Lean & Light (Vegetarian)",
+    "goal": "lose",
+    "calories": 1600,
+    "diet": "vegetarian",
+    "days": {
+      "breakfast": "Poha + a glass of toned milk",
+      "lunch": "2 roti + dal + curd + salad",
+      "snacks": "Sprouts bowl + green tea",
+      "dinner": "Palak paneer + 1 roti"
+    }
+  },
+  {
+    "id": 2,
+    "name": "Balanced Maintain",
+    "goal": "maintain",
+    "calories": 2100,
+    "diet": "vegetarian",
+    "days": {
+      "breakfast": "Oats with banana and almonds",
+      "lunch": "Brown rice + rajma + salad",
+      "snacks": "Peanut butter toast",
+      "dinner": "Khichdi + curd"
+    }
+  },
+  {
+    "id": 3,
+    "name": "Muscle Build (Non-veg)",
+    "goal": "gain",
+    "calories": 2700,
+    "diet": "non-vegetarian",
+    "days": {
+      "breakfast": "4 boiled eggs + 2 parathas",
+      "lunch": "Chicken curry + rice + salad",
+      "snacks": "Whey shake + banana",
+      "dinner": "Grilled fish + roti + vegetables"
+    }
+  },
+  {
+    "id": 4,
+    "name": "High Protein Vegan",
+    "goal": "maintain",
+    "calories": 2000,
+    "diet": "vegan",
+    "days": {
+      "breakfast": "Tofu scramble + oats",
+      "lunch": "Chole + brown rice",
+      "snacks": "Almonds + coconut water",
+      "dinner": "Moong sprouts salad + roti"
+    }
+  }
+]

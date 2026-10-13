@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AI Coach — FitPulse</title>
+<meta name="description" content="Ask the FitPulse AI coach about meals, workouts and recovery — answers shaped by your own logs." />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+<main class="page"><div class="container grid g-side">
+  <div class="card chat-shell">
+    <div class="chat-log" id="log"></div>
+    <form class="chat-input" id="form"><input class="input" id="q" placeholder="Ask about food, training, sleep…" autocomplete="off" /><button class="btn">Send</button></form>
+  </div>
+  <div class="stack">
+    <div class="card"><h3>Try asking</h3><div class="stack" style="gap:8px;margin-top:12px" id="sugg"></div></div>
+    <div class="card card-flat small muted" id="aiBadge">⚡ AI Engine: Active · Answers are personalized using your daily logged macros and workouts.</div>
+    <button class="btn btn-ghost" id="clear">Clear chat</button>
+  </div>
+</div></main>
+<script src="js/app.js"></script>
+<script src="js/auth.js"></script>
+<script>
+if (requireAuth()) {
+  const KEY = "fitpulse:chat:" + currentUser().email;
+  let msgs = JSON.parse(localStorage.getItem(KEY) || "[]");
+  const SUG = ["What should I eat for dinner?", "Am I getting enough protein?", "Suggest a workout for today", "How is my sleep?", "How do I break a weight plateau?"];
+  $("#sugg").innerHTML = SUG.map((s) => `<button class="chip" data-s="${s}">${s}</button>`).join("");
+  $$("[data-s]").forEach((b) => b.onclick = () => ask(b.dataset.s));
+
+  // Check backend AI status
+  (async function checkAiConfig() {
+    try {
+      const cfg = await api("/config");
+      if (cfg && cfg.aiProvider && cfg.aiProvider !== "heuristic") {
+        $("#aiBadge").innerHTML = `⚡ Live Model: <strong>${cfg.aiProvider.toUpperCase()}</strong> connected · Tailored to your physiological metrics.`;
+      }
+    } catch(e) {}
+  })();
+
+  function draw(typing) {
+    if (!msgs.length) msgs = [{ from: "ai", text: `Hi ${getUserProfile().name?.split(" ")[0] || "there"}! I've read your recent logs. Ask me anything about food, training or recovery.` }];
+    $("#log").innerHTML = msgs.map((m) => `<div class="msg ${m.from}">${m.from === "ai" ? '<span class="avatar" style="width:32px;height:32px;font-size:.7rem">AI</span>' : ""}<div class="bubble">${escapeHtml(m.text)}</div></div>`).join("") +
+      (typing ? `<div class="msg ai"><div class="bubble typing"><span></span><span></span><span></span></div></div>` : "");
+    $("#log").scrollTop = 1e6;
+    localStorage.setItem(KEY, JSON.stringify(msgs.slice(-40)));
+  }
+
+  function localReply(q) {
+    q = q.toLowerCase();
+    const t = getTargets(), n = getNutrition().totals, p = getUserProfile(), s = getSleep(), pr = getProgress();
+    const left = t.calories - n.calories;
+    if (/protein/.test(q)) return `You've had ${n.protein} g of your ${t.protein} g protein target. ${n.protein < t.protein ? `To close the ${t.protein - n.protein} g gap: 150 g curd (11 g), 100 g paneer (18 g) or a bowl of sprouts (9 g).` : "You're covered today — nice."}`;
+    if (/dinner|eat|meal|food/.test(q)) return left > 0 ? `You have about ${left} kcal left. ${p.diet === "vegetarian" || p.diet === "vegan" ? "Try 2 roti + dal + salad (~400 kcal, 13 g protein) or palak paneer with 1 roti." : "Try grilled fish or chicken breast with roti and salad (~450 kcal, 35 g protein)."}` : "You've hit your calorie target. If hungry, choose a salad, green tea or coconut water.";
+    if (/workout|train|exercise/.test(q)) return `For a ${p.experience || "beginner"} aiming to ${p.goal === "gain" ? "build muscle" : p.goal === "lose" ? "lose weight" : "stay fit"}: ${p.goal === "gain" ? "Full Body Strength (45 min) — focus on progressive overload." : "HIIT Burn 20 or a 30 min Morning Run, then 10 min core."} Open Workouts to start a timer.`;
+    if (/sleep/.test(q)) return s ? `Last night: ${s.hours} h (${s.bedtime} → ${s.wake}). ${s.hours < 7 ? "Below 7 h — try a fixed bedtime and no screens 30 min before bed." : "Solid recovery. Keep the schedule consistent."}` : "You haven't logged last night's sleep yet. Add it on the Sleep page.";
+    if (/plateau|stall|weight/.test(q)) return `You're at ${pr.current} kg (start ${pr.start}, target ${pr.target}). Plateaus usually come from creeping portions or less movement. Log everything for 7 days, add 2,000 steps, and keep protein at ${t.protein} g.`;
+    if (/water|hydrat/.test(q)) return `You've had ${(getWater().total / 1000).toFixed(1)} L of 3 L today. Keep a 750 ml bottle on your desk and refill twice.`;
+    return `Today you're at ${n.calories}/${t.calories} kcal, ${n.protein} g protein and a health score of ${healthScore()}. Ask me about meals, protein, workouts, sleep or plateaus for specific advice.`;
+  }
+
+  async function ask(text) {
+    text = text.trim(); if (!text) return;
+    msgs.push({ from: "me", text }); draw(true);
+    let reply;
+    try {
+      const res = await api("/ai/coach", {
+        messages: msgs,
+        message: text,
+        profile: getUserProfile()
+      });
+      if (res && res.ok && res.reply) {
+        reply = res.reply;
+      }
+    } catch (e) { console.warn(e); }
+    setTimeout(() => { msgs.push({ from: "ai", text: reply || localReply(text) }); draw(); }, reply ? 0 : 700);
+  }
+  $("#form").onsubmit = (e) => { e.preventDefault(); ask($("#q").value); $("#q").value = ""; };
+  $("#clear").onclick = () => { msgs = []; draw(); };
+  draw();
+}
+</script>
+</body>
+</html>

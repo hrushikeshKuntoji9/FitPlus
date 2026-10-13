@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Create your account — FitPulse</title>
+<meta name="description" content="Create a free FitPulse account and get your first daily health score in two minutes." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body data-chrome="off">
+<div class="auth-wrap">
+  <aside class="auth-side">
+    <a href="index.html" class="brand" style="color:#fff"><span class="brand-mark">⚡</span><span>FitPulse</span></a>
+    <div>
+      <h1 style="font-size:2.6rem">Two minutes to your first score.</h1>
+      <p style="max-width:36ch;opacity:.85;margin-top:14px">Tell us your goal, log one meal, and FitPulse starts doing the maths for you.</p>
+    </div>
+    <div class="small" style="opacity:.8;position:relative;z-index:2">Free forever for core tracking.</div>
+  </aside>
+
+  <main class="auth-main">
+    <div class="auth-card card card-pad-lg">
+      <a href="index.html" class="small muted">← Back to home</a>
+      <h2 style="margin:14px 0 6px">Create account</h2>
+      <p class="lead small">No card needed.</p>
+
+      <div id="g_id_onload"
+           data-client_id=""
+           data-context="signup"
+           data-ux_mode="popup"
+           data-callback="handleGoogleCallback"
+           data-auto_prompt="false">
+      </div>
+      <div class="g_id_signin"
+           data-type="standard"
+           data-shape="rectangular"
+           data-theme="outline"
+           data-text="signup_with"
+           data-size="large"
+           data-logo_alignment="left"
+           style="margin-top: 22px; display: flex; justify-content: center;">
+      </div>
+      <div class="or-line">or use your email</div>
+
+      <form id="regForm" novalidate>
+        <div class="field"><label for="name">Full name</label><input class="input" id="name" placeholder="Aarav Sharma" autocomplete="name" /></div>
+        <div class="field"><label for="email">Email</label><input class="input" type="email" id="email" placeholder="you@example.com" autocomplete="email" /></div>
+        <div class="field">
+          <label for="password">Password</label>
+          <input class="input" type="password" id="password" placeholder="At least 8 characters" autocomplete="new-password" />
+          <div class="bar bar-sm" style="margin-top:4px"><i id="strength" style="width:0"></i></div>
+          <span class="tiny muted" id="strengthText">Use 8+ characters with a number.</span>
+        </div>
+        <div class="field"><label for="confirm">Confirm password</label><input class="input" type="password" id="confirm" placeholder="Repeat password" autocomplete="new-password" /></div>
+        <label class="check" style="margin-bottom:16px"><input type="checkbox" id="terms" /><span>I agree to the Terms and Privacy Policy.</span></label>
+        <p class="form-error" id="err"></p>
+        <button class="btn btn-block btn-lg" type="submit">Create account</button>
+      </form>
+
+      <p class="small muted center" style="margin-top:18px">Already a member? <a href="login.html" style="color:var(--accent)">Log in</a></p>
+    </div>
+  </main>
+</div>
+
+<script src="js/app.js"></script>
+<script src="js/auth.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script>
+  loadPublicConfig().then(initGoogleButton);
+  $("#password").addEventListener("input", (e) => {
+    const v = e.target.value;
+    let s = 0;
+    if (v.length >= 8) s += 40; if (/\d/.test(v)) s += 25; if (/[A-Z]/.test(v)) s += 20; if (/[^\w]/.test(v)) s += 15;
+    $("#strength").style.width = Math.min(s, 100) + "%";
+    $("#strengthText").textContent = s < 45 ? "Weak password." : s < 80 ? "Decent password." : "Strong password.";
+  });
+
+  $("#regForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const name = $("#name").value.trim(), email = $("#email").value.trim();
+    const password = $("#password").value, confirm = $("#confirm").value;
+    const err = $("#err"); err.textContent = "";
+    if (name.length < 2) return (err.textContent = "Please enter your name.");
+    if (!/^\S+@\S+\.\S+$/.test(email)) return (err.textContent = "Enter a valid email address.");
+    if (password.length < 8) return (err.textContent = "Password must be at least 8 characters.");
+    if (password !== confirm) return (err.textContent = "Passwords do not match.");
+    if (!$("#terms").checked) return (err.textContent = "Please accept the terms to continue.");
+    const res = await registerUser({ name, email, password });
+    if (!res.ok) return (err.textContent = res.error);
+    toast("Account created. Let's set up your plan.");
+    setTimeout(() => location.replace("onboarding.html"), 400);
+  });
+</script>
+</body>
+</html>

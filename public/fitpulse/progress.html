@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Progress — FitPulse</title>
+<meta name="description" content="Weight, BMI, calories and step trends over 7, 30 or 90 days with goal completion." />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="css/style.css" />
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+<main class="page"><div class="container stack">
+  <div class="row-between">
+    <div><span class="eyebrow">Progress</span><h2 style="margin-top:12px">Your trends</h2></div>
+    <div class="segmented" id="range"><button data-n="7">7 days</button><button data-n="30" class="active">30 days</button><button data-n="90">90 days</button></div>
+  </div>
+  <div class="grid g4" id="tiles"></div>
+  <div class="grid g-side">
+    <div class="card"><div class="card-title"><h3>Weight</h3></div><div class="chart-box"><canvas id="wChart"></canvas></div></div>
+    <div class="card">
+      <div class="card-title"><h3>Goal</h3></div>
+      <div class="center" id="goalRing"></div>
+      <hr class="divider" />
+      <form id="wForm" class="row"><input class="input" type="number" step="0.1" id="kg" placeholder="Today's weight (kg)" /><button class="btn">Log</button></form>
+    </div>
+  </div>
+  <div class="grid g2">
+    <div class="card"><div class="card-title"><h3>Calories</h3></div><div class="chart-box chart-box-sm"><canvas id="cChart"></canvas></div></div>
+    <div class="card"><div class="card-title"><h3>Steps</h3></div><div class="chart-box chart-box-sm"><canvas id="sChart"></canvas></div></div>
+  </div>
+  <div class="card"><div class="card-title"><h3>Badges</h3></div><div class="tile-grid" id="badges"></div></div>
+</div></main>
+
+<script src="js/app.js"></script>
+<script src="js/auth.js"></script>
+<script>
+if (requireAuth()) {
+  let n = 30, charts = [];
+  function render() {
+    charts.forEach((c) => c && c.destroy()); charts = [];
+    const p = getProgress(), l = userLogs(), days = lastNDays(n);
+    const lbl = days.map((d) => new Date(d).toLocaleDateString(undefined, { day: "numeric", month: "short" }));
+    $("#tiles").innerHTML = [
+      ["Current", p.current + " kg"], ["Change", (p.lost >= 0 ? "−" : "+") + Math.abs(p.lost) + " kg"],
+      ["BMI", p.bmi + (p.bmi ? " · " + bmiLabel(p.bmi) : "")], ["Target", p.target + " kg"],
+    ].map(([a, b]) => `<div class="card stat-tile"><span class="label">${a}</span><span class="stat-value">${b}</span></div>`).join("");
+    $("#goalRing").innerHTML = ringHTML({ value: p.percent, max: 100, size: 160, label: "to goal" });
+    const wmap = Object.fromEntries(p.weights.map((w) => [w.date, w.kg]));
+    charts.push(lineChart($("#wChart"), lbl, [{ label: "Weight (kg)", data: days.map((d) => wmap[d] ?? null), spanGaps: true }]));
+    charts.push(lineChart($("#cChart"), lbl, [{ label: "kcal", data: days.map((d) => getNutrition(d).totals.calories) }], { type: "bar" }));
+    charts.push(lineChart($("#sChart"), lbl, [{ label: "Steps", data: days.map((d) => l.steps[d] || 0) }]));
+    const wk = l.workouts.length, st = habitStreak();
+    $("#badges").innerHTML = [
+      ["🔥", "7-day streak", st >= 7], ["🏋️", "10 workouts", wk >= 10], ["⚖️", "First kg lost", p.lost >= 1],
+      ["🎯", "Halfway there", p.percent >= 50], ["💧", "Hydration hero", (l.water[todayKey()]?.total || 0) >= 3000], ["🏆", "Goal reached", p.percent >= 100],
+    ].map(([e, t, ok]) => `<div class="badge-tile ${ok ? "" : "locked"}"><div class="emoji">${e}</div><div class="small bold">${t}</div></div>`).join("");
+    animateRings();
+  }
+  $$("#range button").forEach((b) => b.onclick = () => { $$("#range button").forEach((x) => x.classList.toggle("active", x === b)); n = +b.dataset.n; render(); });
+  $("#wForm").onsubmit = (e) => { e.preventDefault(); const kg = +$("#kg").value; if (kg < 30 || kg > 250) return toast("Enter a valid weight.", "err"); saveWeight(kg); $("#kg").value = ""; toast("Weight logged"); render(); };
+  render();
+}
+</script>
+</body>
+</html>

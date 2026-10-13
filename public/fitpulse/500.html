@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>500 — Server Error — FitPulse Pro</title>
+<meta name="description" content="An internal server error occurred on FitPulse Pro." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body data-footer="on">
+<main class="page">
+  <div class="container center stack" style="max-width:640px;margin-inline:auto;padding:60px 20px;text-align:center">
+    <div style="font-size:5rem;line-height:1;margin-bottom:10px">⚠️</div>
+    <span class="eyebrow" style="color:var(--danger)">Error 500</span>
+    <h1 style="margin:12px 0 16px;font-size:clamp(2.4rem,5vw,3.5rem)">Internal Server Error</h1>
+    <p class="lead" style="margin-bottom:28px">We experienced an unexpected hiccup processing this request. Our engineering team has been alerted.</p>
+    
+    <div class="card card-pad-lg" style="text-align:left;margin-bottom:28px">
+      <h3 style="margin-bottom:8px">What can you do?</h3>
+      <ul class="list">
+        <li class="list-item"><strong>Refresh:</strong> The issue may be temporary. Try refreshing the page.</li>
+        <li class="list-item"><strong>Check Status:</strong> Our core database and health endpoints might still be operational.</li>
+        <li class="list-item"><strong>Contact Us:</strong> If this problem persists, notify our support engineers.</li>
+      </ul>
+    </div>
+
+    <div class="row" style="justify-content:center;gap:12px">
+      <a href="index.html" class="btn btn-lg">← Return to Home</a>
+      <button onclick="location.reload()" class="btn btn-ghost btn-lg">↻ Retry Request</button>
+      <a href="support.html" class="btn btn-ghost btn-lg">Get Help</a>
+    </div>
+  </div>
+</main>
+<script src="js/app.js"></script>
+<script src="js/auth.js"></script>
+</body>
+</html>

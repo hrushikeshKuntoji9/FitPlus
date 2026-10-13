@@ -1,0 +1,21 @@
+# ==============================================================================
+# FitPulse Pro — Caddyfile (Automatic SSL via Let's Encrypt / ZeroSSL)
+# Run with: caddy run --config deploy/Caddyfile
+# ==============================================================================
+
+fitpulse.app, www.fitpulse.app {
+    # Reverse proxy all requests to FitPulse backend
+    reverse_proxy 127.0.0.1:5000
+
+    # Compression
+    encode gzip zstd
+
+    # Security Headers
+    header {
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "SAMEORIGIN"
+        X-XSS-Protection "1; mode=block"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        Strict-Transport-Security "max-age=31536000; includeSubDomains"
+    }
+}

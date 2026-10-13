@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Subscriptions — FitPulse Admin</title>
+<meta name="description" content="View FitPulse premium members, renewal dates and payment status." />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body data-area="admin">
+<main class="page"><div class="container stack">
+  <div><span class="eyebrow">Admin</span><h2 style="margin-top:12px">Subscriptions</h2></div>
+  <div class="grid g4" id="tiles"></div>
+  <div class="table-wrap"><table class="tbl" id="t"></table></div>
+</div></main>
+<script src="js/app.js"></script>
+<script src="js/auth.js"></script>
+<script>
+if (requireAuth("admin")) {
+  let cachedUsers = [];
+
+  async function loadData() {
+    const statsRes = await api("/admin/stats", null, "GET");
+    const usersRes = await api("/admin/users?per_page=100", null, "GET");
+
+    if (usersRes && usersRes.ok && usersRes.data) {
+      cachedUsers = usersRes.data;
+    } else {
+      cachedUsers = Store.get().users.filter((u) => u.role !== "admin");
+    }
+
+    const prem = cachedUsers.filter((u) => u.plan === "premium");
+    const pending = cachedUsers.filter((u) => (u.payment_status || u.payment) === "pending");
+    const soon = prem.filter((u) => {
+      const exp = u.plan_expiry || u.planExpiry;
+      return exp && (new Date(exp) - Date.now()) / 864e5 < 30;
+    });
+
+    const premCount = statsRes?.ok ? statsRes.premium : prem.length;
+    const freeCount = statsRes?.ok ? (statsRes.members - statsRes.premium) : (cachedUsers.length - prem.length);
+    const expCount = statsRes?.ok ? statsRes.expiringMemberships : soon.length;
+
+    $("#tiles").innerHTML = [
+      ["Premium", premCount],
+      ["Free", freeCount],
+      ["Payment pending", pending.length],
+      ["Expiring in 30d", expCount]
+    ].map(([a, b]) => `<div class="card stat-tile"><span class="label">${a}</span><span class="stat-value">${b}</span></div>`).join("");
+
+    $("#t").innerHTML = `<thead><tr><th>Member</th><th>Plan</th><th>Start</th><th>Expiry</th><th>Payment</th><th>Actions</th></tr></thead><tbody>` +
+      cachedUsers.map((u) => {
+        const pay = u.payment_status || u.payment || "none";
+        const start = u.plan_start || u.planStart;
+        const expiry = u.plan_expiry || u.planExpiry;
+        const type = u.plan_type || u.planType;
+        return `<tr><td>${escapeHtml(u.name)}<div class="tiny muted">${escapeHtml(u.email)}</div></td>
+        <td><span class="badge ${u.plan === "premium" ? "" : "badge-muted"}">${u.plan}${type ? " · " + type : ""}</span></td>
+        <td>${start ? fmtDate(start) : "—"}</td><td>${expiry ? fmtDate(expiry) : "—"}</td>
+        <td><span class="badge ${pay === "pending" ? "badge-warn" : pay === "paid" ? "badge-ok" : "badge-muted"}">${pay}</span></td>
+        <td class="tbl-actions">${pay === "pending" ? `<button class="btn btn-sm btn-soft" data-paid="${u.id}" data-e="${u.email}">Mark paid</button>` : ""}${u.plan === "premium" ? `<button class="btn btn-sm btn-ghost" data-ext="${u.id}" data-e="${u.email}" data-exp="${expiry || ''}">+1 month</button>` : ""}</td></tr>`;
+      }).join("") + "</tbody>";
+
+    $$("[data-paid]").forEach((b) => b.onclick = async () => {
+      const uid = b.dataset.paid, e = b.dataset.e;
+      await api(`/admin/users/${uid}`, { payment_status: "paid" }, "PUT");
+      Store.update((s) => { const x = s.users.find((u) => u.email === e); if (x) x.payment = "paid"; });
+      toast("Marked as paid");
+      loadData();
+    });
+
+    $$("[data-ext]").forEach((b) => b.onclick = async () => {
+      const uid = b.dataset.ext, e = b.dataset.e, currExp = b.dataset.exp;
+      const d = new Date(currExp || Date.now());
+      d.setMonth(d.getMonth() + 1);
+      const newExp = todayKey(d);
+      await api(`/admin/users/${uid}`, { plan_expiry: newExp }, "PUT");
+      Store.update((s) => { const x = s.users.find((u) => u.email === e); if (x) x.planExpiry = newExp; });
+      toast("Extended by 1 month");
+      loadData();
+    });
+  }
+
+  loadData();
+}
+</script>
+</body>
+</html>

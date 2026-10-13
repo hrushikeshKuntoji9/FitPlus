@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Sleep — FitPulse</title>
+<meta name="description" content="Log bedtime and wake time, see sleep duration and weekly sleep consistency." />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="css/style.css" />
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+<main class="page"><div class="container stack">
+  <div><span class="eyebrow">Recovery</span><h2 style="margin-top:12px">Sleep tracker</h2></div>
+  <div class="grid g-side">
+    <div class="card card-pad-lg">
+      <div class="card-title"><h3>Log last night</h3></div>
+      <form id="form">
+        <div class="form-grid">
+          <div class="field"><label>Bedtime</label><input class="input" type="time" id="bed" value="23:00" /></div>
+          <div class="field"><label>Wake time</label><input class="input" type="time" id="wake" value="07:00" /></div>
+        </div>
+        <div class="field"><label>How did you feel?</label><select class="select" id="quality"><option>Rested</option><option>Okay</option><option>Groggy</option></select></div>
+        <button class="btn">Save sleep</button>
+      </form>
+    </div>
+    <div class="card center"><div id="ring"></div><p class="small muted" id="avg" style="margin-top:12px"></p></div>
+  </div>
+  <div class="card"><div class="card-title"><h3>Last 14 nights</h3></div><div class="chart-box chart-box-sm"><canvas id="chart"></canvas></div></div>
+</div></main>
+<script src="js/app.js"></script>
+<script src="js/auth.js"></script>
+<script>
+if (requireAuth()) {
+  let chart;
+  function hours(b, w) { const [bh, bm] = b.split(":").map(Number), [wh, wm] = w.split(":").map(Number); let m = wh * 60 + wm - (bh * 60 + bm); if (m <= 0) m += 1440; return +(m / 60).toFixed(1); }
+  function render() {
+    const s = getSleep(), l = userLogs(), days = lastNDays(14);
+    if (s) { $("#bed").value = s.bedtime; $("#wake").value = s.wake; }
+    $("#ring").innerHTML = ringHTML({ value: s?.hours || 0, max: 8, size: 170, label: "hours", display: s ? s.hours + "h" : "—" });
+    const vals = days.map((d) => l.sleep[d]?.hours || 0), logged = vals.filter(Boolean);
+    $("#avg").textContent = logged.length ? `14-night average: ${(logged.reduce((a, b) => a + b, 0) / logged.length).toFixed(1)} h` : "No nights logged yet.";
+    chart && chart.destroy();
+    chart = lineChart($("#chart"), days.map((d) => new Date(d).getDate()), [{ label: "Hours", data: vals }], { type: "bar" });
+    animateRings();
+  }
+  $("#form").onsubmit = (e) => {
+    e.preventDefault();
+    const h = hours($("#bed").value, $("#wake").value);
+    saveSleep({ bedtime: $("#bed").value, wake: $("#wake").value, hours: h, quality: $("#quality").value });
+    if (h >= 7 && !getHabits().sleep) toggleHabit("sleep");
+    toast(`Saved ${h} h of sleep`); render();
+  };
+  render();
+}
+</script>
+</body>
+</html>

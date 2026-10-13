@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Log in — FitPulse</title>
+<meta name="description" content="Log in to FitPulse to see your daily score, meals, workouts and coach." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body data-chrome="off">
+<div class="auth-wrap">
+  <aside class="auth-side">
+    <a href="index.html" class="brand" style="color:#fff"><span class="brand-mark">⚡</span><span>FitPulse</span></a>
+    <div>
+      <h1 style="font-size:2.6rem">Welcome back.</h1>
+      <p style="max-width:34ch;opacity:.85;margin-top:14px">Your streak, your macros and your coach are exactly where you left them.</p>
+    </div>
+    <div class="small" id="demoHint" style="opacity:.8;position:relative;z-index:2"></div>
+  </aside>
+
+  <main class="auth-main">
+    <div class="auth-card card card-pad-lg">
+      <a href="index.html" class="small muted">← Back to home</a>
+      <h2 style="margin:14px 0 6px">Log in</h2>
+      <p class="lead small">Good to see you again.</p>
+
+      <div id="g_id_onload"
+           data-client_id=""
+           data-context="signin"
+           data-ux_mode="popup"
+           data-callback="handleGoogleCallback"
+           data-auto_prompt="false">
+      </div>
+      <div class="g_id_signin"
+           data-type="standard"
+           data-shape="rectangular"
+           data-theme="outline"
+           data-text="signin_with"
+           data-size="large"
+           data-logo_alignment="left"
+           style="margin-top: 22px; display: flex; justify-content: center;">
+      </div>
+      <div class="or-line">or use your email</div>
+
+      <form id="loginForm" novalidate>
+        <div class="field">
+          <label for="email">Email</label>
+          <input class="input" type="email" id="email" placeholder="you@example.com" autocomplete="email" />
+        </div>
+        <div class="field">
+          <label for="password">Password</label>
+          <input class="input" type="password" id="password" placeholder="••••••••" autocomplete="current-password" />
+        </div>
+        <div class="row-between" style="margin-bottom:18px">
+          <label class="check"><input type="checkbox" id="remember" /><span>Remember me</span></label>
+          <a href="#" class="small" style="color:var(--accent)" id="forgot">Forgot password?</a>
+        </div>
+        <p class="form-error" id="err"></p>
+        <button class="btn btn-block btn-lg" type="submit">Log in</button>
+      </form>
+
+      <div id="resetSection" style="display:none;margin-top:16px">
+        <h3 style="margin-bottom:8px">Reset Password</h3>
+        <p class="small muted" style="margin-bottom:14px">Enter a new secure password for your account.</p>
+        <form id="resetForm">
+          <div class="field">
+            <label for="newPass">New Password</label>
+            <input class="input" type="password" id="newPass" placeholder="••••••••" />
+          </div>
+          <div class="field">
+            <label for="confPass">Confirm Password</label>
+            <input class="input" type="password" id="confPass" placeholder="••••••••" />
+          </div>
+          <p class="form-error" id="resetErr"></p>
+          <button class="btn btn-block btn-lg" type="submit" id="resetSubmit">Update Password</button>
+          <button class="btn btn-ghost btn-block" style="margin-top:8px" type="button" id="cancelReset">Back to Log in</button>
+        </form>
+      </div>
+
+      <div id="forgotModal" style="display:none;margin-top:16px;padding:16px;background:var(--card-alt, rgba(255,255,255,0.05));border-radius:12px">
+        <h4 style="margin-bottom:6px">Forgot Password?</h4>
+        <p class="small muted" style="margin-bottom:12px">Enter your email and we'll send you instructions to reset your password.</p>
+        <div class="field">
+          <label for="forgotEmail">Account Email</label>
+          <input class="input" type="email" id="forgotEmail" placeholder="you@example.com" />
+        </div>
+        <p class="form-error" id="forgotErr"></p>
+        <div class="row" style="margin-top:12px">
+          <button class="btn btn-sm" id="sendResetBtn" type="button">Send Link</button>
+          <button class="btn btn-ghost btn-sm" id="closeForgotBtn" type="button">Cancel</button>
+        </div>
+        <div id="devResetLink" style="display:none;margin-top:12px;padding:8px;background:rgba(46,204,113,0.1);border-radius:8px">
+          <p class="small bold" style="color:var(--accent,#10b981)">Development Link:</p>
+          <a href="#" id="devResetUrl" class="small" style="word-break:break-all">Click here to reset password</a>
+        </div>
+      </div>
+
+      <button class="btn btn-ghost btn-block" style="margin-top:10px" id="demoBtn">Fill demo credentials</button>
+      <p class="small muted center" style="margin-top:18px">New here? <a href="register.html" style="color:var(--accent)">Create an account</a></p>
+    </div>
+  </main>
+</div>
+
+<script src="js/app.js"></script>
+<script src="js/auth.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script>
+  (async () => {
+    const cfg = await loadPublicConfig();
+    await initGoogleButton();
+    if (cfg && cfg.demoAccountsEnabled) {
+      $("#demoHint").innerHTML = "Development demo — demo@fitpulse.app / demo1234";
+    } else {
+      $("#demoBtn").style.display = "none";
+    }
+    const v = new URLSearchParams(location.search).get("verify");
+    if (v) {
+      const r = await api("/auth/verify-email", { token: v });
+      toast(r && r.ok ? "Email verified. You can log in." : (r?.error || "Verification failed."), r && r.ok ? "ok" : "err");
+    }
+  })();
+
+  const params = new URLSearchParams(window.location.search);
+  const resetToken = params.get("reset_token");
+
+  if (resetToken) {
+    $("#loginForm").style.display = "none";
+    $("#demoBtn").style.display = "none";
+    $("#resetSection").style.display = "block";
+  }
+
+  const remembered = localStorage.getItem("fitpulse:remember");
+  if (remembered) { $("#email").value = remembered; $("#remember").checked = true; }
+
+  $("#demoBtn").onclick = () => { $("#email").value = "demo@fitpulse.app"; $("#password").value = "demo1234"; };
+
+  $("#forgot").onclick = (e) => {
+    e.preventDefault();
+    $("#forgotModal").style.display = $("#forgotModal").style.display === "none" ? "block" : "none";
+    $("#forgotEmail").value = $("#email").value || "";
+    $("#forgotErr").textContent = "";
+  };
+
+  $("#closeForgotBtn").onclick = () => {
+    $("#forgotModal").style.display = "none";
+  };
+
+  $("#sendResetBtn").onclick = async () => {
+    const email = $("#forgotEmail").value.trim();
+    $("#forgotErr").textContent = "";
+    if (!email || !email.includes("@")) {
+      $("#forgotErr").textContent = "Please enter a valid email.";
+      return;
+    }
+    $("#sendResetBtn").disabled = true;
+    $("#sendResetBtn").textContent = "Sending…";
+    const res = await requestPasswordReset(email);
+    $("#sendResetBtn").disabled = false;
+    $("#sendResetBtn").textContent = "Send Link";
+
+    if (res && res.ok) {
+      toast(res.message || "Reset link generated.");
+      if (res._dev_token) {
+        $("#devResetLink").style.display = "block";
+        $("#devResetUrl").onclick = (e) => {
+          e.preventDefault();
+          window.location.href = `login.html?reset_token=${res._dev_token}`;
+        };
+      } else {
+        $("#forgotModal").style.display = "none";
+      }
+    } else {
+      $("#forgotErr").textContent = res?.error || "Could not request reset. Try again.";
+    }
+  };
+
+  $("#cancelReset").onclick = () => {
+    window.location.href = "login.html";
+  };
+
+  $("#resetForm")?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const p1 = $("#newPass").value, p2 = $("#confPass").value;
+    $("#resetErr").textContent = "";
+    if (p1.length < 6) {
+      $("#resetErr").textContent = "Password must be at least 6 characters.";
+      return;
+    }
+    if (p1 !== p2) {
+      $("#resetErr").textContent = "Passwords do not match.";
+      return;
+    }
+    $("#resetSubmit").disabled = true;
+    $("#resetSubmit").textContent = "Updating…";
+    const res = await performPasswordReset(resetToken, p1);
+    $("#resetSubmit").disabled = false;
+    $("#resetSubmit").textContent = "Update Password";
+    if (res && res.ok) {
+      toast("Password reset successfully! Please log in.");
+      setTimeout(() => { window.location.href = "login.html"; }, 1000);
+    } else {
+      $("#resetErr").textContent = res?.error || "Invalid or expired token.";
+    }
+  });
+
+  function go() {
+    const back = sessionStorage.getItem("fp:returnTo");
+    sessionStorage.removeItem("fp:returnTo");
+    if (isAdmin()) return location.replace("admin.html");
+    const p = getUserProfile();
+    location.replace(p?.onboarded ? (back || "dashboard.html") : "onboarding.html");
+  }
+
+  $("#loginForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const email = $("#email").value.trim(), password = $("#password").value;
+    $("#err").textContent = "";
+    if (!/^\S+@\S+\.\S+$/.test(email)) return ($("#err").textContent = "Enter a valid email address.");
+    if (password.length < 6) return ($("#err").textContent = "Password must be at least 6 characters.");
+    const res = await loginUser({ email, password, remember: $("#remember").checked });
+    if (!res.ok) return ($("#err").textContent = res.error);
+    toast("Welcome back!");
+    setTimeout(go, 350);
+  });
+</script>
+</body>
+</html>

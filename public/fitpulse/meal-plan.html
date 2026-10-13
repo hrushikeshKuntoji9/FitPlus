@@ -1,0 +1,532 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Meal Planner — FitPulse</title>
+<meta name="description" content="Personalized daily and weekly meal plans with macro breakdowns, meal swapping and AI meal recommendations." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body data-footer="on">
+<main class="page">
+  <div class="container stack">
+    <div class="row-between">
+      <div>
+        <span class="eyebrow">Nutrition</span>
+        <h1 style="margin-top:12px;font-size:clamp(2rem,3.5vw,2.8rem)">Meal Planner</h1>
+        <p class="lead small" style="margin-top:4px">Calibrated meal plans aligned with your calorie and macro goals.</p>
+      </div>
+      <div class="row">
+        <div class="segmented" id="planView">
+          <button class="active" data-v="today">Today's Plan</button>
+          <button data-v="week">Weekly View</button>
+          <button data-v="library">Plan Library</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Active Plan Banner -->
+    <div class="card card-pad-lg" id="activePlanBanner">
+      <div class="row-between" style="flex-wrap:wrap;gap:16px">
+        <div>
+          <div class="row" style="gap:10px;align-items:center">
+            <h2 id="planTitle" style="font-size:1.6rem">Lean & Light (Vegetarian)</h2>
+            <span class="badge" id="planDietBadge">Vegetarian</span>
+            <span class="badge badge-ok" id="planGoalBadge">Weight Loss</span>
+          </div>
+          <p class="muted small" style="margin-top:6px" id="planMeta">Target: ~1,600 kcal · High Fiber · Balanced Protein</p>
+        </div>
+        <div class="row" style="gap:10px">
+          <button class="btn btn-sm btn-soft" id="logAllMealsBtn">⚡ Log All to Diary</button>
+          <button class="btn btn-sm btn-ghost" id="changePlanBtn">Switch Plan</button>
+        </div>
+      </div>
+
+      <!-- Macro targets row -->
+      <div class="grid g4" style="margin-top:20px" id="planMacroTiles">
+        <div class="card stat-tile"><span class="label">Total Calories</span><span class="stat-value" id="mCal">1,600</span><span class="delta">kcal/day</span></div>
+        <div class="card stat-tile"><span class="label">Target Protein</span><span class="stat-value" id="mPro">110g</span><span class="delta">~28% cal</span></div>
+        <div class="card stat-tile"><span class="label">Target Carbs</span><span class="stat-value" id="mCarb">170g</span><span class="delta">~42% cal</span></div>
+        <div class="card stat-tile"><span class="label">Target Healthy Fat</span><span class="stat-value" id="mFat">48g</span><span class="delta">~27% cal</span></div>
+      </div>
+    </div>
+
+    <!-- DAY SELECTOR (for weekly mode) -->
+    <div class="row" id="daySelectorRow" style="display:none;gap:8px;overflow-x:auto;padding-bottom:4px">
+      <button class="chip active" data-day="Mon">Monday</button>
+      <button class="chip" data-day="Tue">Tuesday</button>
+      <button class="chip" data-day="Wed">Wednesday</button>
+      <button class="chip" data-day="Thu">Thursday</button>
+      <button class="chip" data-day="Fri">Friday</button>
+      <button class="chip" data-day="Sat">Saturday</button>
+      <button class="chip" data-day="Sun">Sunday</button>
+    </div>
+
+    <!-- MEAL SECTIONS (Breakfast, Lunch, Dinner, Snacks) -->
+    <div id="mealsSection" class="grid g2">
+      <!-- Injected dynamically -->
+    </div>
+
+    <!-- AI MEAL RECOMMENDATION CARD -->
+    <div class="card card-accent card-pad-lg">
+      <div class="row-between">
+        <div class="row" style="gap:10px;align-items:center">
+          <span style="font-size:1.8rem">🤖</span>
+          <div>
+            <h3>AI Chef & Meal Recommendation</h3>
+            <p class="small" style="opacity:0.9">Smart suggestions based on your logged nutrition and calorie deficits.</p>
+          </div>
+        </div>
+        <button class="btn btn-dark btn-sm" id="aiRefreshMealBtn">Get New Recommendation</button>
+      </div>
+      <div id="aiMealCard" style="margin-top:16px;padding:16px;background:rgba(255,255,255,0.2);border-radius:var(--r);backdrop-filter:blur(8px)">
+        <div class="row-between">
+          <strong id="aiMealTitle" style="font-size:1.1rem">High-Protein Moong Dal Chilla + Mint Curd</strong>
+          <span class="badge" id="aiMealCal">~340 kcal · 22g Protein</span>
+        </div>
+        <p class="small" style="margin:8px 0" id="aiMealDesc">Perfect evening recovery dinner to hit your remaining protein without spiking late-night insulin. Rich in potassium and easily digestible.</p>
+        <div class="row" style="gap:8px">
+          <button class="btn btn-sm btn-dark" id="aiAddFoodBtn">+ Add to Today's Dinner</button>
+          <button class="btn btn-sm btn-ghost" id="aiRecipeBtn">View Recipe & Macros</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ALL PLANS LIBRARY (Initially hidden or shown via toggle) -->
+    <div id="librarySection" class="stack" style="display:none">
+      <div class="row-between">
+        <h3>Available Curated Plans</h3>
+        <p class="small muted">Select a plan to calibrate your daily schedule</p>
+      </div>
+      <div class="grid g3" id="plansLibraryGrid"></div>
+    </div>
+
+  </div>
+</main>
+
+<!-- RECIPE & DETAILS MODAL -->
+<div class="modal" id="recipeModal">
+  <div class="modal-panel">
+    <div class="modal-head">
+      <div>
+        <h3 id="recipeTitle">Meal Details</h3>
+        <p class="small muted" id="recipeSub"></p>
+      </div>
+      <button class="icon-btn" data-close>✕</button>
+    </div>
+    <div class="stack" style="gap:14px;margin-top:10px">
+      <div class="grid g4" id="recipeMacroGrid"></div>
+      <div>
+        <h4 style="margin-bottom:6px">Ingredients & Portions</h4>
+        <ul class="list" id="recipeIngredients"></ul>
+      </div>
+      <div>
+        <h4 style="margin-bottom:6px">Preparation & Tips</h4>
+        <p class="small" id="recipeInstructions" style="line-height:1.7;color:var(--text-soft)"></p>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" data-close>Close</button>
+      <button class="btn" id="recipeAddToDiaryBtn">+ Log This Meal</button>
+    </div>
+  </div>
+</div>
+
+<!-- SWAP MEAL MODAL -->
+<div class="modal" id="swapModal">
+  <div class="modal-panel">
+    <div class="modal-head">
+      <div>
+        <h3>Swap Meal</h3>
+        <p class="small muted" id="swapMealSub">Choose a balanced alternative</p>
+      </div>
+      <button class="icon-btn" data-close>✕</button>
+    </div>
+    <div class="list" id="swapAlternativesList" style="max-height:360px;overflow-y:auto"></div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" data-close>Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/app.js"></script>
+<script src="js/auth.js"></script>
+<script>
+if (requireAuth()) {
+  const MEAL_KEYS = [
+    { id: "breakfast", label: "Breakfast", icon: "🌅", time: "8:00 AM - 9:00 AM" },
+    { id: "lunch", label: "Lunch", icon: "☀️", time: "1:00 PM - 2:00 PM" },
+    { id: "snacks", label: "Evening Snack", icon: "🍎", time: "4:30 PM - 5:30 PM" },
+    { id: "dinner", label: "Dinner", icon: "🌙", time: "7:30 PM - 8:30 PM" }
+  ];
+
+  const SAMPLE_RECIPES = {
+    "Poha + a glass of toned milk": {
+      name: "Poha with Roasted Peanuts & Toned Milk",
+      calories: 283, protein: 12, carbs: 44, fat: 6.4, fiber: 2,
+      ingredients: ["1 bowl Pressed rice (Poha) — 60g dry", "250ml Toned Milk", "1 tbsp Roasted Peanuts", "Mustard seeds, curry leaves, green chili", "1 tsp Oil"],
+      instructions: "Rinse poha gently. Sauté mustard seeds, curry leaves and green chili in oil. Add onions, turmeric, and softened poha. Steam for 2 minutes. Garnish with peanuts and coriander. Serve with warm milk."
+    },
+    "2 roti + dal + curd + salad": {
+      name: "2 Whole Wheat Roti + Tadka Dal + Dahi + Kachumber",
+      calories: 468, protein: 24, carbs: 66, fat: 11, fiber: 9,
+      ingredients: ["2 Whole wheat phulkas", "1 bowl Toor Dal tadka", "150g Fresh home curd", "1 bowl Cucumber, tomato, onion kachumber salad with lemon"],
+      instructions: "Knead whole wheat dough and puff rotis on open flame without oil. Cook dal with turmeric and temper with cumin, garlic and a pinch of hing. Serve fresh curd with roasted cumin powder."
+    },
+    "Sprouts bowl + green tea": {
+      name: "Sprouted Moong Salad Bowl + Green Tea",
+      calories: 148, protein: 10, carbs: 22, fat: 1, fiber: 5,
+      ingredients: ["1 bowl Steamed sprouted moong (100g)", "1 cup Green tea (unsweetened)", "Chopped onions, tomatoes, green chilies", "Lemon juice, rock salt and chaat masala"],
+      instructions: "Lightly steam sprouted green gram for 3 minutes to retain crunch and enhance bioavailability. Toss with diced vegetables, squeeze fresh lemon and sprinkle chaat masala."
+    },
+    "Palak paneer + 1 roti": {
+      name: "Creamy Palak Paneer (Low-Fat) + 1 Roti",
+      calories: 390, protein: 20, carbs: 28, fat: 22, fiber: 6,
+      ingredients: ["100g Fresh cow-milk paneer cubes", "1 bowl Blanched spinach puree", "1 Whole wheat roti", "Garlic, ginger, green chili, garam masala"],
+      instructions: "Blanch spinach in boiling water for 2 minutes, shock in ice water and blend. Sauté aromatics, stir in spinach puree, fold in paneer cubes and simmer gently for 4 minutes."
+    },
+    "Oats with banana and almonds": {
+      name: "Rolled Oats Porridge with Banana & Sliced Almonds",
+      calories: 355, protein: 11, carbs: 58, fat: 9, fiber: 8,
+      ingredients: ["40g Rolled oats", "200ml Toned milk or almond milk", "1 medium Ripe banana", "6 Almonds (crushed)", "Dash of cinnamon powder"],
+      instructions: "Cook rolled oats in boiling milk for 5-6 minutes until creamy. Top with sliced banana, crushed almonds and a sprinkle of cinnamon powder."
+    },
+    "Brown rice + rajma + salad": {
+      name: "Brown Rice + Punjabi Rajma Masala + Salad",
+      calories: 520, protein: 21, carbs: 88, fat: 6, fiber: 14,
+      ingredients: ["1 cup Cooked brown rice", "1.5 bowl Slow-cooked Red Kidney Beans (Rajma)", "Mixed green cucumber salad"],
+      instructions: "Soak rajma overnight and pressure cook. Simmer in tomato-onion gravy flavored with ginger and freshly ground garam masala. Serve over steamed brown rice."
+    },
+    "4 boiled eggs + 2 parathas": {
+      name: "4 Boiled Eggs (2 whole, 2 whites) + 2 Light Parathas",
+      calories: 580, protein: 32, carbs: 52, fat: 26, fiber: 5,
+      ingredients: ["4 Country eggs (boiled)", "2 Ajwain parathas", "Mint-coriander chutney"],
+      instructions: "Boil eggs for 8 minutes to firm center. Roll whole wheat dough with ajwain and cook on griddle with minimal ghee."
+    },
+    "Chicken curry + rice + salad": {
+      name: "Homestyle Chicken Curry + Steamed Rice + Onion Salad",
+      calories: 610, protein: 42, carbs: 65, fat: 18, fiber: 3,
+      ingredients: ["150g Skinless chicken breast / drumsticks", "1 cup Steamed basmati rice", "Onion-tomato gravy", "Sliced lemon onion"],
+      instructions: "Marinate chicken in curd and spices. Sauté onions until golden, add ginger-garlic paste and tomatoes, braise chicken until tender."
+    }
+  };
+
+  const ALTERNATIVES = {
+    breakfast: [
+      { name: "Poha + a glass of toned milk", cal: 283, p: 12, c: 44, f: 6 },
+      { name: "3 Steamed Idlis + Sambar + Coconut Chutney", cal: 310, p: 9, c: 54, f: 5 },
+      { name: "2 Moong Dal Chillas with Mint Chutney", cal: 260, p: 18, c: 32, f: 6 },
+      { name: "Oats with banana and almonds", cal: 355, p: 11, c: 58, f: 9 },
+      { name: "3 Egg Omelette with 2 Multigrain Toasts", cal: 390, p: 26, c: 30, f: 18 }
+    ],
+    lunch: [
+      { name: "2 roti + dal + curd + salad", cal: 468, p: 24, c: 66, f: 11 },
+      { name: "Brown rice + rajma + salad", cal: 520, p: 21, c: 88, f: 6 },
+      { name: "Grilled Chicken Breast + Quinoa Bowl", cal: 490, p: 44, c: 42, f: 12 },
+      { name: "Chole with Brown Rice and Kachumber", cal: 480, p: 19, c: 78, f: 9 },
+      { name: "Paneer Bhurji (150g) + 2 Phulkas", cal: 495, p: 25, c: 48, f: 22 }
+    ],
+    snacks: [
+      { name: "Sprouts bowl + green tea", cal: 148, p: 10, c: 22, f: 1 },
+      { name: "Roasted Makhana (1 bowl) + 1 Apple", cal: 185, p: 5, c: 36, f: 3 },
+      { name: "1 Scoop Whey Protein + Chilled Water", cal: 120, p: 24, c: 3, f: 1.5 },
+      { name: "Greek Curd with Berries & Chia seeds", cal: 165, p: 14, c: 18, f: 4 },
+      { name: "Peanut butter on 1 Multigrain Toast", cal: 210, p: 9, c: 19, f: 11 }
+    ],
+    dinner: [
+      { name: "Palak paneer + 1 roti", cal: 390, p: 20, c: 28, f: 22 },
+      { name: "Moong Dal Khichdi + Ghee + Dahi", cal: 380, p: 16, c: 56, f: 9 },
+      { name: "Grilled Rohu Fish Fillet + Sautéed Veggies", cal: 320, p: 32, c: 12, f: 8 },
+      { name: "Soya Chunk Curry + 2 Phulkas + Cucumber", cal: 370, p: 28, c: 46, f: 6 },
+      { name: "Tofu Stir-Fry with Broccoli and Garlic", cal: 290, p: 22, c: 16, f: 14 }
+    ]
+  };
+
+  let allPlans = [];
+  let currentPlan = null;
+  let activeMealDay = "Mon";
+  let swappingMealKey = null;
+
+  async function init() {
+    allPlans = await getMealPlans().catch(() => []);
+    const p = getUserProfile();
+    // Pick plan matching user diet or goal
+    currentPlan = allPlans.find(x => x.diet === p.diet) || allPlans[0];
+    renderBanner();
+    renderMeals();
+    renderLibrary();
+    bindEvents();
+  }
+
+  function renderBanner() {
+    if (!currentPlan) return;
+    $("#planTitle").textContent = currentPlan.name;
+    $("#planDietBadge").textContent = currentPlan.diet.toUpperCase();
+    $("#planGoalBadge").textContent = (currentPlan.goal || "Healthy").toUpperCase();
+    $("#mCal").textContent = currentPlan.calories.toLocaleString();
+    const t = getTargets();
+    $("#mPro").textContent = t.protein + "g";
+    $("#mCarb").textContent = t.carbs + "g";
+    $("#mFat").textContent = t.fat + "g";
+  }
+
+  function renderMeals() {
+    if (!currentPlan || !currentPlan.days) return;
+    const days = currentPlan.days;
+
+    $("#mealsSection").innerHTML = MEAL_KEYS.map(m => {
+      const mealText = days[m.id] || "Balanced meal";
+      const recipe = SAMPLE_RECIPES[mealText] || {
+        name: mealText,
+        calories: Math.round(currentPlan.calories * (m.id === "lunch" ? 0.35 : m.id === "dinner" ? 0.3 : m.id === "breakfast" ? 0.25 : 0.1)),
+        protein: Math.round(25 * (m.id === "snacks" ? 0.4 : 1)),
+        carbs: Math.round(45 * (m.id === "snacks" ? 0.4 : 1)),
+        fat: Math.round(12 * (m.id === "snacks" ? 0.4 : 1))
+      };
+
+      return `
+      <div class="card card-hover" style="display:flex;flex-direction:column;justify-content:space-between">
+        <div>
+          <div class="row-between" style="margin-bottom:10px">
+            <div class="row" style="gap:8px;align-items:center">
+              <span style="font-size:1.6rem">${m.icon}</span>
+              <div>
+                <h3 style="font-size:1.15rem">${m.label}</h3>
+                <span class="tiny muted">${m.time}</span>
+              </div>
+            </div>
+            <span class="badge">${recipe.calories} kcal</span>
+          </div>
+
+          <div style="margin:12px 0 16px">
+            <strong style="font-size:1.05rem;display:block;margin-bottom:4px">${escapeHtml(recipe.name)}</strong>
+            <p class="small muted">P: ${recipe.protein}g · C: ${recipe.carbs}g · F: ${recipe.fat}g</p>
+          </div>
+        </div>
+
+        <div class="row-between" style="border-top:1px solid var(--border);padding-top:12px;margin-top:auto">
+          <button class="btn btn-sm btn-ghost" data-recipe="${m.id}" data-text="${escapeHtml(mealText)}">📖 Recipe</button>
+          <div class="row" style="gap:6px">
+            <button class="btn btn-sm btn-soft" data-swap="${m.id}">⇄ Swap</button>
+            <button class="btn btn-sm" data-log-meal="${m.id}">+ Log</button>
+          </div>
+        </div>
+      </div>`;
+    }).join("");
+
+    // Bind action buttons
+    $$("[data-recipe]").forEach(b => {
+      b.onclick = () => openRecipe(b.dataset.recipe, b.dataset.text);
+    });
+
+    $$("[data-swap]").forEach(b => {
+      b.onclick = () => openSwap(b.dataset.swap);
+    });
+
+    $$("[data-log-meal]").forEach(b => {
+      b.onclick = () => logSingleMeal(b.dataset.logMeal);
+    });
+  }
+
+  function renderLibrary() {
+    $("#plansLibraryGrid").innerHTML = allPlans.map(p => `
+      <div class="card price-card ${p.id === currentPlan?.id ? "popular" : ""}">
+        ${p.id === currentPlan?.id ? '<span class="badge" style="justify-self:start">Active Plan</span>' : ""}
+        <h3>${escapeHtml(p.name)}</h3>
+        <div><span class="price-amount">${p.calories}</span> <span class="muted">kcal / day</span></div>
+        <p class="small muted" style="margin:6px 0 14px">Diet: ${escapeHtml(p.diet)} · Goal: ${escapeHtml(p.goal || "Balance")}</p>
+        <ul class="price-list small" style="margin-bottom:18px">
+          <li><b>🌅 Breakfast:</b> ${escapeHtml(p.days.breakfast)}</li>
+          <li><b>☀️ Lunch:</b> ${escapeHtml(p.days.lunch)}</li>
+          <li><b>🍎 Snack:</b> ${escapeHtml(p.days.snacks)}</li>
+          <li><b>🌙 Dinner:</b> ${escapeHtml(p.days.dinner)}</li>
+        </ul>
+        <button class="btn btn-block ${p.id === currentPlan?.id ? "btn-ghost" : ""}" data-select-plan="${p.id}">
+          ${p.id === currentPlan?.id ? "Currently Selected" : "Adopt This Plan"}
+        </button>
+      </div>
+    `).join("");
+
+    $$("[data-select-plan]").forEach(b => {
+      b.onclick = () => {
+        const picked = allPlans.find(x => String(x.id) === b.dataset.selectPlan);
+        if (picked) {
+          currentPlan = picked;
+          renderBanner();
+          renderMeals();
+          renderLibrary();
+          toast("Adopted " + picked.name);
+          setView("today");
+        }
+      };
+    });
+  }
+
+  function openRecipe(mealKey, mealText) {
+    const r = SAMPLE_RECIPES[mealText] || {
+      name: mealText,
+      calories: 380, protein: 20, carbs: 45, fat: 12, fiber: 4,
+      ingredients: ["Fresh whole grains and seasonal vegetables", "Home-ground spices and cold-pressed oil", "Controlled portions matched to daily targets"],
+      instructions: "Prepared fresh with minimal refined oil. Cook thoroughly to retain micro-nutrients."
+    };
+
+    $("#recipeTitle").textContent = r.name;
+    $("#recipeSub").textContent = `Portion calibrated for ${mealKey.toUpperCase()}`;
+    $("#recipeMacroGrid").innerHTML = `
+      <div class="card stat-tile"><span class="label">Calories</span><span class="stat-value" style="font-size:1.3rem">${r.calories}</span></div>
+      <div class="card stat-tile"><span class="label">Protein</span><span class="stat-value" style="font-size:1.3rem">${r.protein}g</span></div>
+      <div class="card stat-tile"><span class="label">Carbs</span><span class="stat-value" style="font-size:1.3rem">${r.carbs}g</span></div>
+      <div class="card stat-tile"><span class="label">Fat</span><span class="stat-value" style="font-size:1.3rem">${r.fat}g</span></div>
+    `;
+
+    $("#recipeIngredients").innerHTML = (r.ingredients || []).map(i => `<li class="list-item"><span>•</span><span>${escapeHtml(i)}</span></li>`).join("");
+    $("#recipeInstructions").textContent = r.instructions || "Cook with low heat, preserve fresh flavours and serve hot.";
+    $("#recipeAddToDiaryBtn").onclick = () => {
+      addFood(mealKey, {
+        name: r.name,
+        calories: r.calories,
+        protein: r.protein,
+        carbs: r.carbs,
+        fat: r.fat,
+        fiber: r.fiber || 0,
+        serving: "1 meal portion"
+      });
+      closeModal("#recipeModal");
+      toast(r.name + " logged to diary!");
+    };
+    openModal("#recipeModal");
+  }
+
+  function openSwap(mealKey) {
+    swappingMealKey = mealKey;
+    const alts = ALTERNATIVES[mealKey] || [];
+    $("#swapMealSub").textContent = `Select an alternative for ${mealKey.toUpperCase()}`;
+    $("#swapAlternativesList").innerHTML = alts.map((a, i) => `
+      <div class="list-item" style="cursor:pointer">
+        <div style="flex:1">
+          <strong class="small">${escapeHtml(a.name)}</strong>
+          <div class="tiny muted">P: ${a.p}g · C: ${a.c}g · F: ${a.f}g</div>
+        </div>
+        <span class="badge" style="margin-right:8px">${a.cal} kcal</span>
+        <button class="btn btn-sm" data-choose-alt="${i}">Swap</button>
+      </div>
+    `).join("");
+
+    $$("[data-choose-alt]").forEach(b => {
+      b.onclick = () => {
+        const picked = alts[b.dataset.chooseAlt];
+        currentPlan.days[swappingMealKey] = picked.name;
+        SAMPLE_RECIPES[picked.name] = {
+          name: picked.name,
+          calories: picked.cal, protein: picked.p, carbs: picked.c, fat: picked.f, fiber: 3,
+          ingredients: ["Healthy wholesome home ingredients", "Calibrated spices and olive/mustard oil"],
+          instructions: "Quick preparation under 20 minutes."
+        };
+        closeModal("#swapModal");
+        renderMeals();
+        toast("Swapped to " + picked.name);
+      };
+    });
+    openModal("#swapModal");
+  }
+
+  function logSingleMeal(mealKey) {
+    const text = currentPlan.days[mealKey];
+    const r = SAMPLE_RECIPES[text] || { name: text, calories: 350, protein: 18, carbs: 40, fat: 10, fiber: 2 };
+    addFood(mealKey, {
+      name: r.name,
+      calories: r.calories,
+      protein: r.protein,
+      carbs: r.carbs,
+      fat: r.fat,
+      fiber: r.fiber || 0,
+      serving: "1 meal portion"
+    });
+    toast(`Logged ${mealKey} to your diary!`);
+  }
+
+  function logAllMeals() {
+    MEAL_KEYS.forEach(m => logSingleMeal(m.id));
+    toast("All 4 meals added to today's diary!");
+  }
+
+  function setView(v) {
+    $$("#planView button").forEach(b => b.classList.toggle("active", b.dataset.v === v));
+    if (v === "today") {
+      $("#activePlanBanner").style.display = "";
+      $("#daySelectorRow").style.display = "none";
+      $("#mealsSection").style.display = "";
+      $("#librarySection").style.display = "none";
+    } else if (v === "week") {
+      $("#activePlanBanner").style.display = "";
+      $("#daySelectorRow").style.display = "flex";
+      $("#mealsSection").style.display = "";
+      $("#librarySection").style.display = "none";
+    } else if (v === "library") {
+      $("#activePlanBanner").style.display = "none";
+      $("#daySelectorRow").style.display = "none";
+      $("#mealsSection").style.display = "none";
+      $("#librarySection").style.display = "";
+    }
+  }
+
+  function bindEvents() {
+    $$("#planView button").forEach(b => {
+      b.onclick = () => setView(b.dataset.v);
+    });
+
+    $$("#daySelectorRow button").forEach(b => {
+      b.onclick = () => {
+        $$("#daySelectorRow button").forEach(x => x.classList.toggle("active", x === b));
+        activeMealDay = b.dataset.day;
+        toast("Loaded menu for " + b.textContent);
+      };
+    });
+
+    $("#logAllMealsBtn").onclick = logAllMeals;
+    $("#changePlanBtn").onclick = () => setView("library");
+
+    const AI_SUGGESTIONS = [
+      { title: "High-Protein Moong Dal Chilla + Mint Curd", cal: 340, p: 22, desc: "Perfect evening recovery dinner to hit your remaining protein without spiking late-night insulin. Rich in potassium and easily digestible." },
+      { title: "Grilled Paneer & Roasted Bell Pepper Salad", cal: 320, p: 19, desc: "Low carb, rich in micronutrients and healthy fats. Kept light for optimal deep sleep." },
+      { title: "Soya Chunk & Vegetable Pulao with Raita", cal: 410, p: 28, desc: "High biological value plant protein with complex carbs to replenish glycogen." },
+      { title: "Steamed Idli with Drumstick Sambar & Sprout Chaat", cal: 330, p: 15, desc: "Naturally fermented easy-to-digest gut-healthy dinner with antioxidants." }
+    ];
+    let aiIdx = 0;
+    $("#aiRefreshMealBtn").onclick = () => {
+      aiIdx = (aiIdx + 1) % AI_SUGGESTIONS.length;
+      const s = AI_SUGGESTIONS[aiIdx];
+      $("#aiMealTitle").textContent = s.title;
+      $("#aiMealCal").textContent = `~${s.cal} kcal · ${s.p}g Protein`;
+      $("#aiMealDesc").textContent = s.desc;
+      toast("AI Chef updated suggestion");
+    };
+
+    $("#aiAddFoodBtn").onclick = () => {
+      const s = AI_SUGGESTIONS[aiIdx];
+      addFood("dinner", {
+        name: s.title,
+        calories: s.cal,
+        protein: s.p,
+        carbs: Math.round(s.cal * 0.4 / 4),
+        fat: Math.round(s.cal * 0.25 / 9),
+        fiber: 5,
+        serving: "1 chef bowl"
+      });
+      toast("Added " + s.title + " to Dinner!");
+    };
+
+    $("#aiRecipeBtn").onclick = () => {
+      const s = AI_SUGGESTIONS[aiIdx];
+      openRecipe("dinner", s.title);
+    };
+  }
+
+  init();
+}
+</script>
+</body>
+</html>

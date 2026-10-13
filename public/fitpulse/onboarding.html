@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Set up your plan — FitPulse</title>
+<meta name="description" content="Tell FitPulse your goal, body stats and activity level to generate your daily calorie and macro targets." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body data-chrome="off">
+<main class="auth-main" style="min-height:100vh">
+  <div class="card card-pad-lg" style="width:min(640px,100%)">
+    <div class="row-between">
+      <a href="index.html" class="brand"><span class="brand-mark">⚡</span><span>FitPulse</span></a>
+      <span class="badge" id="stepBadge">Step 1 of 5</span>
+    </div>
+    <div class="bar bar-sm" style="margin:18px 0 24px"><i id="progressBar" style="width:20%"></i></div>
+
+    <form id="obForm">
+      <section class="ob-step" data-step="1">
+        <h2>Let's start with you</h2>
+        <p class="lead small" style="margin:8px 0 20px">This stays private and only shapes your targets.</p>
+        <div class="field"><label>Full name</label><input class="input" id="name" placeholder="Aarav Sharma" /></div>
+        <div class="form-grid">
+          <div class="field"><label>Age</label><input class="input" type="number" id="age" min="12" max="95" placeholder="28" /></div>
+          <div class="field"><label>Gender</label>
+            <select class="select" id="gender"><option value="male">Male</option><option value="female">Female</option><option value="other">Other</option></select>
+          </div>
+        </div>
+      </section>
+
+      <section class="ob-step hide" data-step="2">
+        <h2>Body measurements</h2>
+        <p class="lead small" style="margin:8px 0 20px">Used for BMI and your calorie budget.</p>
+        <div class="form-grid">
+          <div class="field"><label>Height (cm)</label><input class="input" type="number" id="height" min="120" max="230" placeholder="176" /></div>
+          <div class="field"><label>Current weight (kg)</label><input class="input" type="number" step="0.1" id="weight" min="30" max="250" placeholder="78.4" /></div>
+        </div>
+        <div class="field"><label>Target weight (kg)</label><input class="input" type="number" step="0.1" id="targetWeight" min="30" max="250" placeholder="72" /></div>
+      </section>
+
+      <section class="ob-step hide" data-step="3">
+        <h2>What's the goal?</h2>
+        <p class="lead small" style="margin:8px 0 20px">You can change this any time from Settings.</p>
+        <div class="stack" id="goalPicker"></div>
+      </section>
+
+      <section class="ob-step hide" data-step="4">
+        <h2>How active are your days?</h2>
+        <p class="lead small" style="margin:8px 0 20px">Be honest — an overestimate makes every target wrong.</p>
+        <div class="stack" id="activityPicker"></div>
+      </section>
+
+      <section class="ob-step hide" data-step="5">
+        <h2>Diet and experience</h2>
+        <p class="lead small" style="margin:8px 0 20px">This shapes meal plans and workout suggestions.</p>
+        <div class="field"><label>Diet preference</label>
+          <select class="select" id="diet"><option value="vegetarian">Vegetarian</option><option value="non-vegetarian">Non-vegetarian</option><option value="vegan">Vegan</option><option value="eggetarian">Eggetarian</option></select>
+        </div>
+        <div class="field"><label>Training experience</label>
+          <select class="select" id="experience"><option value="beginner">Beginner</option><option value="intermediate">Intermediate</option><option value="advanced">Advanced</option></select>
+        </div>
+        <div class="card card-flat" id="preview" style="margin-top:6px"></div>
+      </section>
+
+      <p class="form-error" id="err"></p>
+      <div class="row-between" style="margin-top:18px">
+        <button type="button" class="btn btn-ghost" id="backBtn">Back</button>
+        <button type="button" class="btn" id="nextBtn">Continue</button>
+      </div>
+    </form>
+  </div>
+</main>
+
+<script src="js/app.js"></script>
+<script src="js/auth.js"></script>
+<script>
+  if (requireAuth()) {
+    const p = getUserProfile() || {};
+    $("#name").value = p.name || currentUser()?.name || "";
+
+    const GOALS = [
+      ["lose", "Lose weight", "Gentle deficit of about 400 kcal a day."],
+      ["maintain", "Maintain & get fitter", "Eat at maintenance, train consistently."],
+      ["gain", "Build muscle", "Small surplus with high protein."],
+    ];
+    const ACTS = [
+      ["sedentary", "Mostly sitting", "Desk job, little walking."],
+      ["light", "Lightly active", "Some walking, 1-2 sessions a week."],
+      ["moderate", "Moderately active", "3-4 sessions a week."],
+      ["active", "Very active", "5-6 sessions or a physical job."],
+      ["athlete", "Athlete", "Twice-a-day training."],
+    ];
+    const pick = (items, name, selected) => items.map(([v, t, s]) =>
+      `<label class="habit-tile ${selected === v ? "done" : ""}" data-pick="${name}" data-value="${v}">
+        <input type="radio" name="${name}" value="${v}" ${selected === v ? "checked" : ""} style="display:none" />
+        <span class="habit-check">${ICONS.check}</span>
+        <span><span class="li-title">${t}</span><br /><span class="li-sub">${s}</span></span></label>`).join("");
+
+    $("#goalPicker").innerHTML = pick(GOALS, "goal", p.goal || "lose");
+    $("#activityPicker").innerHTML = pick(ACTS, "activity", p.activity || "moderate");
+    $$("[data-pick]").forEach((el) => el.addEventListener("click", () => {
+      $$(`[data-pick="${el.dataset.pick}"]`).forEach((s) => s.classList.remove("done"));
+      el.classList.add("done");
+      el.querySelector("input").checked = true;
+    }));
+
+    let step = 1;
+    const total = 5;
+    const show = () => {
+      $$(".ob-step").forEach((s) => s.classList.toggle("hide", Number(s.dataset.step) !== step));
+      $("#stepBadge").textContent = `Step ${step} of ${total}`;
+      $("#progressBar").style.width = (step / total) * 100 + "%";
+      $("#backBtn").style.visibility = step === 1 ? "hidden" : "visible";
+      $("#nextBtn").textContent = step === total ? "Finish setup" : "Continue";
+      if (step === total) renderPreview();
+    };
+
+    const val = (id) => $("#" + id).value.trim();
+    const picked = (name) => document.querySelector(`input[name="${name}"]:checked`)?.value;
+
+    function collect() {
+      return {
+        name: val("name"), age: Number(val("age")), gender: val("gender"),
+        height: Number(val("height")), weight: Number(val("weight")), targetWeight: Number(val("targetWeight")),
+        goal: picked("goal"), activity: picked("activity"), diet: val("diet"), experience: val("experience"),
+      };
+    }
+
+    function renderPreview() {
+      const t = getTargets(collect());
+      const b = bmi(Number(val("weight")), Number(val("height")));
+      $("#preview").innerHTML = `
+        <strong class="small">Your starting targets</strong>
+        <div class="grid g4" style="margin-top:12px;gap:10px">
+          <div class="stat-tile"><span class="num">${t.calories}</span><span class="label">kcal / day</span></div>
+          <div class="stat-tile"><span class="num">${t.protein} g</span><span class="label">Protein</span></div>
+          <div class="stat-tile"><span class="num">3 L</span><span class="label">Water</span></div>
+          <div class="stat-tile"><span class="num">${b || "—"}</span><span class="label">BMI ${b ? bmiLabel(b) : ""}</span></div>
+        </div>`;
+    }
+
+    function validate() {
+      const e = $("#err"); e.textContent = "";
+      if (step === 1) {
+        if (val("name").length < 2) return (e.textContent = "Please enter your name."), false;
+        const a = Number(val("age"));
+        if (!a || a < 12 || a > 95) return (e.textContent = "Enter an age between 12 and 95."), false;
+      }
+      if (step === 2) {
+        const h = Number(val("height")), w = Number(val("weight")), tw = Number(val("targetWeight"));
+        if (!h || h < 120 || h > 230) return (e.textContent = "Enter a height between 120 and 230 cm."), false;
+        if (!w || w < 30 || w > 250) return (e.textContent = "Enter a weight between 30 and 250 kg."), false;
+        if (!tw || tw < 30 || tw > 250) return (e.textContent = "Enter a realistic target weight."), false;
+      }
+      return true;
+    }
+
+    $("#backBtn").onclick = () => { if (step > 1) { step--; show(); } };
+    $("#nextBtn").onclick = () => {
+      if (!validate()) return;
+      if (step < total) { step++; show(); return; }
+      const res = saveOnboarding(collect());
+      if (!res.ok) return ($("#err").textContent = res.error);
+      toast("Plan ready. Welcome to FitPulse!");
+      setTimeout(() => location.replace("dashboard.html"), 450);
+    };
+    show();
+  }
+</script>
+</body>
+</html>

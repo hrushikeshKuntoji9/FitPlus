@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Checkout — FitPulse</title>
+<meta name="description" content="Complete your FitPulse Premium purchase with Razorpay Checkout." />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+<main class="page"><div class="container grid g-side">
+  <div class="card card-pad-lg" id="formCard">
+    <h2>Checkout</h2>
+    <p class="lead small" style="margin:6px 0 20px">Card and UPI details are collected by Razorpay. FitPulse never stores card numbers or CVVs.</p>
+    <form id="form">
+      <div class="field"><label for="coupon">Coupon</label><div class="row"><input class="input" id="coupon" placeholder="Optional — FIT20" /><button type="button" class="btn btn-ghost" id="apply">Apply</button></div></div>
+      <p class="form-error" id="err"></p>
+      <button class="btn btn-block btn-lg" id="pay" type="submit">Continue to payment</button>
+      <p class="tiny muted" style="margin-top:12px">Prices are calculated on the server. Visiting this page does not activate Premium.</p>
+    </form>
+  </div>
+  <div class="card" id="summary" style="align-self:start"></div>
+</div></main>
+<script src="js/app.js"></script>
+<script src="js/auth.js"></script>
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+if (requireAuth()) {
+  const id = new URLSearchParams(location.search).get("plan") || "yearly";
+  let lastQuote = null;
+
+  async function refreshQuote() {
+    const coupon = $("#coupon").value.trim().toUpperCase();
+    const orderRes = await api("/payments/create-order", { plan: id, coupon });
+    if (!orderRes || !orderRes.ok) {
+      $("#summary").innerHTML = `<h3>Order summary</h3><p class="small muted" style="margin-top:12px">${escapeHtml(orderRes?.error || "Could not load pricing.")}</p>
+        <a href="subscription.html" class="small muted" style="display:block;margin-top:14px">← Change plan</a>`;
+      return null;
+    }
+    lastQuote = orderRes;
+    $("#summary").innerHTML = `<h3>Order summary</h3><div class="list" style="margin-top:14px">
+      <div class="list-item"><span style="flex:1">${escapeHtml(orderRes.planName)}</span><strong>₹${orderRes.basePrice}</strong></div>
+      ${orderRes.discount ? `<div class="list-item"><span style="flex:1">Coupon</span><strong>−₹${orderRes.discount}</strong></div>` : ""}
+      <div class="list-item"><span style="flex:1">GST 18%</span><strong>₹${orderRes.gst}</strong></div>
+      <div class="list-item"><span style="flex:1" class="bold">Total</span><strong class="num" style="font-size:1.3rem">₹${orderRes.total}</strong></div></div>
+      <p class="tiny muted" style="margin-top:10px">${orderRes.razorpayConfigured ? "Razorpay Checkout will open next." : "Development checkout — Razorpay keys are not configured."}</p>
+      <a href="subscription.html" class="small muted" style="display:block;margin-top:14px">← Change plan</a>`;
+    $("#pay").textContent = `Pay ₹${orderRes.total}`;
+    return orderRes;
+  }
+
+  $("#apply").onclick = async () => {
+    const q = await refreshQuote();
+    if (q) toast(q.discount ? "Coupon applied" : "No coupon discount", q.discount ? "ok" : "info");
+  };
+
+  $("#form").onsubmit = async (e) => {
+    e.preventDefault();
+    const err = $("#err"); err.textContent = "";
+    $("#pay").disabled = true; $("#pay").textContent = "Creating order…";
+    const orderRes = await api("/payments/create-order", { plan: id, coupon: $("#coupon").value.trim().toUpperCase() });
+    if (!orderRes || !orderRes.ok) {
+      $("#pay").disabled = false;
+      await refreshQuote();
+      err.textContent = orderRes?.error || "Could not create payment order.";
+      return;
+    }
+
+    if (orderRes.razorpayConfigured && orderRes.razorpayKeyId && typeof Razorpay !== "undefined") {
+      $("#pay").textContent = "Awaiting payment…";
+      const options = {
+        key: orderRes.razorpayKeyId,
+        amount: orderRes.amountPaise,
+        currency: "INR",
+        name: "FitPulse Pro",
+        description: `${orderRes.planName} Membership`,
+        order_id: orderRes.gatewayOrderId,
+        prefill: { name: orderRes.userName || "", email: orderRes.userEmail || "" },
+        theme: { color: "#10b981" },
+        handler: async function (response) {
+          $("#pay").textContent = "Verifying payment…";
+          const verifyRes = await api("/payments/verify", {
+            orderId: orderRes.orderId,
+            razorpayPaymentId: response.razorpay_payment_id,
+            razorpayOrderId: response.razorpay_order_id,
+            razorpaySignature: response.razorpay_signature,
+            method: "razorpay"
+          });
+          handlePaymentResult(verifyRes, orderRes);
+        },
+        modal: {
+          ondismiss: function () {
+            $("#pay").disabled = false;
+            refreshQuote();
+            toast("Payment cancelled.", "info");
+          }
+        }
+      };
+      const rzp = new Razorpay(options);
+      rzp.on("payment.failed", function (resp) {
+        location.href = "payment-failed.html?reason=" + encodeURIComponent(resp.error.description || "Payment failed.");
+      });
+      rzp.open();
+      return;
+    }
+
+    if (!orderRes.razorpayConfigured) {
+      const simRes = await api("/payments/verify", {
+        orderId: orderRes.orderId,
+        razorpayPaymentId: "pay_dev_" + uid(),
+        razorpayOrderId: orderRes.gatewayOrderId,
+        method: "dev"
+      });
+      handlePaymentResult(simRes, orderRes);
+      return;
+    }
+
+    err.textContent = "Razorpay Checkout could not load.";
+    $("#pay").disabled = false;
+    refreshQuote();
+  };
+
+  function handlePaymentResult(verifyRes, orderRes) {
+    if (!verifyRes || !verifyRes.ok) {
+      location.href = "payment-failed.html?reason=" + encodeURIComponent(verifyRes?.error || "Payment verification failed.");
+      return;
+    }
+    location.href = "payment-success.html?order_id=" + encodeURIComponent(orderRes.orderId);
+  }
+  refreshQuote();
+}
+</script>
+</body>
+</html>

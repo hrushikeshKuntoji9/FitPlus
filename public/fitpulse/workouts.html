@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Workouts — FitPulse</title>
+<meta name="description" content="Strength, HIIT, cardio, yoga and core workouts with timers, exercise lists and history." />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+<main class="page"><div class="container stack">
+  <div class="row-between">
+    <div><span class="eyebrow">Workouts</span><h2 style="margin-top:12px">Train today</h2></div>
+    <input class="input" id="search" placeholder="Search workouts" style="max-width:260px" />
+  </div>
+  <div class="chip-scroll" id="cats"></div>
+  <div class="grid g3" id="grid"></div>
+  <div class="card"><div class="card-title"><h3>History</h3><span class="badge" id="histCount"></span></div><div class="list" id="history"></div></div>
+</div></main>
+
+<div class="modal" id="wModal">
+  <div class="modal-panel">
+    <div class="modal-head"><div><h3 id="wTitle"></h3><p class="small muted" id="wMeta"></p></div><button class="icon-btn" data-close>✕</button></div>
+    <div class="center" style="margin:10px 0 18px"><div class="stat-value" id="timer" style="font-size:3rem">00:00</div></div>
+    <ol class="list" id="wEx"></ol>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" id="tBtn">Start timer</button>
+      <button class="btn" id="doneBtn">Mark complete</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/app.js"></script>
+<script src="js/auth.js"></script>
+<script>
+if (requireAuth()) {
+  let all = [], cat = "All", current = null, secs = 0, iv = null;
+  const icon = { Strength: "🏋️", HIIT: "🔥", Cardio: "🏃", Gym: "💪", Yoga: "🧘", Core: "🎯" };
+  getWorkouts().then((w) => { all = w; renderCats(); render(); }).catch(() => toast("Could not load workouts", "err"));
+  function renderCats() {
+    $("#cats").innerHTML = ["All", ...new Set(all.map((w) => w.category))].map((c) => `<button class="chip ${c === cat ? "active" : ""}" data-c="${c}">${c}</button>`).join("");
+    $$("[data-c]").forEach((b) => b.onclick = () => { cat = b.dataset.c; renderCats(); render(); });
+  }
+  function render() {
+    const q = $("#search").value.toLowerCase();
+    const r = all.filter((w) => (cat === "All" || w.category === cat) && w.name.toLowerCase().includes(q));
+    $("#grid").innerHTML = r.length ? r.map((w) => `<div class="card card-hover feature-card">
+      <div class="row-between"><span style="font-size:1.8rem">${icon[w.category] || "⚡"}</span><span class="badge">${escapeHtml(w.level)}</span></div>
+      <h3>${escapeHtml(w.name)}</h3><p>${escapeHtml(w.focus)} · ${escapeHtml(w.equipment)}</p>
+      <div class="row small muted"><span>⏱ ${w.minutes} min</span><span>🔥 ${w.calories} kcal</span></div>
+      <div class="row" style="gap:8px;margin-top:6px">
+        <a href="workout-detail.html?id=${w.id}" class="btn btn-sm btn-ghost">View Details</a>
+        <button class="btn btn-sm" data-open="${all.indexOf(w)}">Quick Start</button>
+      </div></div>`).join("") : `<div class="empty">No workouts match.</div>`;
+    $$("[data-open]").forEach((b) => b.onclick = () => open(all[b.dataset.open]));
+    const h = getWorkoutHistory();
+    $("#histCount").textContent = h.length + " sessions";
+    $("#history").innerHTML = h.length ? h.slice(0, 10).map((w) => `<div class="list-item"><div class="li-icon">${ICONS.workout}</div><div style="flex:1"><div class="li-title">${escapeHtml(w.name)}</div><div class="li-sub">${fmtDate(w.date)} · ${w.minutes} min</div></div><span class="badge badge-ok">${w.calories} kcal</span></div>`).join("") : `<div class="empty">Complete a workout to see it here.</div>`;
+  }
+  $("#search").oninput = render;
+  function fmt(s) { return String(Math.floor(s / 60)).padStart(2, "0") + ":" + String(s % 60).padStart(2, "0"); }
+  function stop() { clearInterval(iv); iv = null; $("#tBtn").textContent = "Start timer"; }
+  function open(w) {
+    current = w; secs = 0; stop(); $("#timer").textContent = "00:00";
+    $("#wTitle").textContent = w.name; $("#wMeta").textContent = `${w.category} · ${w.minutes} min · ~${w.calories} kcal`;
+    $("#wEx").innerHTML = w.exercises.map((e, i) => `<li class="list-item"><span class="li-icon">${i + 1}</span><span>${escapeHtml(e)}</span></li>`).join("");
+    openModal("#wModal");
+  }
+  $("#tBtn").onclick = () => { if (iv) return stop(); iv = setInterval(() => { secs++; $("#timer").textContent = fmt(secs); }, 1000); $("#tBtn").textContent = "Pause"; };
+  $("#doneBtn").onclick = () => {
+    const mins = secs >= 60 ? Math.round(secs / 60) : current.minutes;
+    completeWorkout({ name: current.name, minutes: mins, calories: Math.round((current.calories / current.minutes) * mins), category: current.category });
+    const hb = getHabits(); if (!hb.workout) toggleHabit("workout");
+    stop(); closeModal("#wModal"); toast("Workout logged. Nice work!"); render();
+  };
+}
+</script>
+</body>
+</html>

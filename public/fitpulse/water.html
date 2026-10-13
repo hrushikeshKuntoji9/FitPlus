@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Water — FitPulse</title>
+<meta name="description" content="Track daily water intake with quick-add glasses and a weekly hydration trend." />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="css/style.css" />
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+<main class="page"><div class="container stack">
+  <div><span class="eyebrow">Hydration</span><h2 style="margin-top:12px">Water tracker</h2></div>
+  <div class="grid g-side">
+    <div class="card card-pad-lg center">
+      <div id="ring"></div>
+      <div class="chip-row" style="justify-content:center;margin-top:22px">
+        <button class="btn btn-soft" data-ml="250">+ Glass 250 ml</button>
+        <button class="btn btn-soft" data-ml="500">+ Bottle 500 ml</button>
+        <button class="btn btn-soft" data-ml="750">+ 750 ml</button>
+        <button class="btn btn-ghost" data-ml="-250">Undo 250 ml</button>
+      </div>
+    </div>
+    <div class="card"><div class="card-title"><h3>Today's log</h3></div><div class="list" id="entries"></div></div>
+  </div>
+  <div class="card"><div class="card-title"><h3>Last 7 days</h3></div><div class="chart-box chart-box-sm"><canvas id="chart"></canvas></div></div>
+</div></main>
+<script src="js/app.js"></script>
+<script src="js/auth.js"></script>
+<script>
+if (requireAuth()) {
+  let chart;
+  function render() {
+    const w = getWater(), t = getTargets().water;
+    $("#ring").innerHTML = ringHTML({ value: w.total, max: t, size: 200, stroke: 14, label: "of 3 L", display: (w.total / 1000).toFixed(2) + " L" });
+    $("#entries").innerHTML = w.entries.length ? w.entries.slice().reverse().map((e) => `<div class="list-item"><div class="li-icon">${ICONS.water}</div><div style="flex:1" class="li-title">${e.ml > 0 ? "+" : ""}${e.ml} ml</div><span class="li-sub">${new Date(e.at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span></div>`).join("") : `<div class="empty">No water logged yet.</div>`;
+    const days = lastNDays(7), l = userLogs();
+    chart && chart.destroy();
+    chart = lineChart($("#chart"), days.map((d) => new Date(d).toLocaleDateString(undefined, { weekday: "short" })), [{ label: "ml", data: days.map((d) => l.water[d]?.total || 0) }], { type: "bar" });
+    animateRings();
+  }
+  $$("[data-ml]").forEach((b) => b.onclick = () => {
+    const before = getWater().total;
+    saveWater(+b.dataset.ml);
+    if (before < 3000 && getWater().total >= 3000) { toast("Daily goal reached! 💧"); if (!getHabits().water) toggleHabit("water"); }
+    render();
+  });
+  render();
+}
+</script>
+</body>
+</html>

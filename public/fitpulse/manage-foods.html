@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Manage foods — FitPulse Admin</title>
+<meta name="description" content="Add, edit and remove foods in the FitPulse database." />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body data-area="admin">
+<main class="page"><div class="container stack">
+  <div class="row-between"><div><span class="eyebrow">Admin</span><h2 style="margin-top:12px">Food database</h2></div>
+    <div class="row"><input class="input" id="q" placeholder="Search foods" style="max-width:220px" /><button class="btn" id="add">+ Add food</button></div></div>
+  <p class="small muted">Base foods come from <code>data/foods.json</code> (read-only here). Foods you add are saved as custom foods and appear in every user's search.</p>
+  <div class="table-wrap"><table class="tbl" id="t"></table></div>
+</div></main>
+<div class="modal" id="m"><div class="modal-panel">
+  <div class="modal-head"><h3 id="mt">Add food</h3><button class="icon-btn" data-close>✕</button></div>
+  <form id="form"><div class="form-grid">
+    <div class="field"><label>Name</label><input class="input" id="name" required /></div>
+    <div class="field"><label>Category</label><input class="input" id="category" placeholder="Protein" /></div>
+    <div class="field"><label>Calories</label><input class="input" type="number" id="calories" required /></div>
+    <div class="field"><label>Serving</label><input class="input" id="serving" placeholder="1 bowl" /></div>
+    <div class="field"><label>Protein g</label><input class="input" type="number" step="0.1" id="protein" /></div>
+    <div class="field"><label>Carbs g</label><input class="input" type="number" step="0.1" id="carbs" /></div>
+    <div class="field"><label>Fat g</label><input class="input" type="number" step="0.1" id="fat" /></div>
+    <div class="field"><label>Fibre g</label><input class="input" type="number" step="0.1" id="fiber" /></div>
+  </div><div class="modal-foot"><button type="button" class="btn btn-ghost" data-close>Cancel</button><button class="btn">Save</button></div></form>
+</div></div>
+<script src="js/app.js"></script>
+<script src="js/auth.js"></script>
+<script>
+if (requireAuth("admin")) {
+  $("#add").textContent = "+ Add food";
+  const F = ["name", "category", "calories", "serving", "protein", "carbs", "fat", "fiber"];
+  let base = [], editing = null;
+  loadJSON("foods.json").then((b) => { base = b; render(); });
+  function render() {
+    const q = $("#q").value.toLowerCase(), custom = Store.get().customFoods || [];
+    const rows = [...custom.map((f) => ({ ...f, custom: true })), ...base].filter((f) => f.name.toLowerCase().includes(q));
+    $("#t").innerHTML = `<thead><tr><th>Name</th><th>Category</th><th>Serving</th><th>kcal</th><th>P</th><th>C</th><th>F</th><th></th></tr></thead><tbody>` +
+      rows.map((f) => `<tr><td>${escapeHtml(f.name)} ${f.custom ? '<span class="badge">custom</span>' : ""}</td><td>${escapeHtml(f.category || "")}</td><td>${escapeHtml(f.serving || "")}</td><td>${f.calories}</td><td>${f.protein}</td><td>${f.carbs}</td><td>${f.fat}</td>
+      <td class="tbl-actions">${f.custom ? `<button class="btn btn-sm btn-soft" data-ed="${f.id}">Edit</button><button class="btn btn-sm btn-danger" data-del="${f.id}">Delete</button>` : '<span class="tiny muted">base</span>'}</td></tr>`).join("") + "</tbody>";
+    $$("[data-ed]").forEach((b) => b.onclick = () => open(custom.find((f) => String(f.id) === b.dataset.ed)));
+    $$("[data-del]").forEach((b) => b.onclick = async () => { if (await confirmDialog("Delete food?", "This removes it from search.", "Delete")) { Store.update((s) => (s.customFoods = s.customFoods.filter((f) => String(f.id) !== b.dataset.del))); toast("Deleted"); render(); } });
+  }
+  function open(f) { editing = f || null; $("#mt").textContent = f ? "Edit food" : "Add food"; F.forEach((k) => ($("#" + k).value = f ? f[k] ?? "" : "")); openModal("#m"); }
+  $("#add").onclick = () => open();
+  $("#q").oninput = render;
+  $("#form").onsubmit = (e) => {
+    e.preventDefault();
+    const f = {}; F.forEach((k) => (f[k] = ["name", "category", "serving"].includes(k) ? $("#" + k).value.trim() : +$("#" + k).value || 0));
+    if (!f.name || !f.calories) return toast("Name and calories are required.", "err");
+    Store.update((s) => { s.customFoods = s.customFoods || []; if (editing) Object.assign(s.customFoods.find((x) => x.id === editing.id), f); else s.customFoods.unshift({ id: "c" + uid(), ...f }); });
+    closeModal("#m"); toast("Food saved"); render();
+  };
+}
+</script>
+</body>
+</html>

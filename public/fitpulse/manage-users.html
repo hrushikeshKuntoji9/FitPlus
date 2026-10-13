@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Manage users — FitPulse Admin</title>
+<meta name="description" content="Search, suspend, upgrade and remove FitPulse members." />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body data-area="admin">
+<main class="page"><div class="container stack">
+  <div class="row-between"><div><span class="eyebrow">Admin</span><h2 style="margin-top:12px">Users</h2></div>
+    <div class="row"><input class="input" id="q" placeholder="Search name or email" style="max-width:240px" />
+    <select class="select" id="f" style="width:auto"><option value="">All</option><option value="premium">Premium</option><option value="free">Free</option><option value="suspended">Suspended</option></select></div></div>
+  <div class="table-wrap"><table class="tbl" id="t"></table></div>
+</div></main>
+<script src="js/app.js"></script>
+<script src="js/auth.js"></script>
+<script>
+if (requireAuth("admin")) {
+  let cachedUsers = [];
+
+  async function fetchUsers() {
+    const q = $("#q").value.trim().toLowerCase(), f = $("#f").value;
+    const res = await api(`/admin/users?q=${encodeURIComponent(q)}&plan=${f === 'premium' || f === 'free' ? f : ''}&status=${f === 'suspended' ? 'suspended' : ''}`, null, "GET");
+    if (res && res.ok && res.data) {
+      cachedUsers = res.data;
+    } else {
+      cachedUsers = Store.get().users.filter((u) => u.role !== "admin" && (u.name + u.email).toLowerCase().includes(q) && (!f || u.plan === f || u.status === f));
+    }
+    renderTable();
+  }
+
+  function renderTable() {
+    const users = cachedUsers;
+    $("#t").innerHTML = `<thead><tr><th>Name</th><th>Email</th><th>Plan</th><th>Status</th><th>Joined</th><th>Actions</th></tr></thead><tbody>` +
+      (users.length ? users.map((u) => `<tr><td>${escapeHtml(u.name)}</td><td>${escapeHtml(u.email)}</td>
+      <td><span class="badge ${u.plan === "premium" ? "" : "badge-muted"}">${u.plan}</span></td>
+      <td><span class="badge ${u.status === "active" ? "badge-ok" : "badge-danger"}">${u.status}</span></td><td>${fmtDate(u.created_at || u.created)}</td>
+      <td class="tbl-actions"><button class="btn btn-sm btn-soft" data-a="plan" data-id="${u.id}" data-e="${u.email}" data-plan="${u.plan}">${u.plan === "premium" ? "Downgrade" : "Upgrade"}</button>
+      <button class="btn btn-sm btn-ghost" data-a="status" data-id="${u.id}" data-e="${u.email}" data-status="${u.status}">${u.status === "active" ? "Suspend" : "Activate"}</button>
+      <button class="btn btn-sm btn-danger" data-a="del" data-id="${u.id}" data-e="${u.email}">Delete</button></td></tr>`).join("") : `<tr><td colspan="6" class="empty">No users match.</td></tr>`) + "</tbody>";
+
+    $$("[data-a]").forEach((b) => b.onclick = async () => {
+      const e = b.dataset.e, a = b.dataset.a, uid = b.dataset.id;
+      if (a === "del" && !(await confirmDialog("Delete user?", e + " will be permanently removed.", "Delete"))) return;
+
+      if (a === "plan") {
+        const nextPlan = b.dataset.plan === "premium" ? "free" : "premium";
+        await api(`/admin/users/${uid}`, { plan: nextPlan }, "PUT");
+        Store.update((s) => { const x = s.users.find(u => u.email === e); if (x) x.plan = nextPlan; });
+        toast(`User plan updated to ${nextPlan}`);
+      } else if (a === "status") {
+        const nextStatus = b.dataset.status === "active" ? "suspended" : "active";
+        await api(`/admin/users/${uid}`, { status: nextStatus }, "PUT");
+        Store.update((s) => { const x = s.users.find(u => u.email === e); if (x) x.status = nextStatus; });
+        toast(`User status updated to ${nextStatus}`);
+      } else if (a === "del") {
+        await api(`/admin/users/${uid}`, null, "DELETE");
+        Store.update((s) => { s.users = s.users.filter((x) => x.email !== e); delete s.profiles[e]; delete s.logs[e]; });
+        toast("User deleted");
+      }
+      fetchUsers();
+    });
+  }
+
+  let timeout;
+  $("#q").oninput = () => { clearTimeout(timeout); timeout = setTimeout(fetchUsers, 250); };
+  $("#f").onchange = fetchUsers;
+  fetchUsers();
+}
+</script>
+</body>
+</html>

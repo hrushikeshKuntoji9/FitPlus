@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Profile — FitPulse</title>
+<meta name="description" content="Your FitPulse profile: body stats, goal, targets and plan." />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+<main class="page"><div class="container stack">
+  <div class="card card-pad-lg row" style="gap:20px;flex-wrap:wrap">
+    <div class="avatar avatar-lg" id="av"></div>
+    <div style="flex:1"><h2 id="name"></h2><p class="muted" id="email"></p><div class="row" style="margin-top:8px" id="tags"></div></div>
+    <a href="settings.html" class="btn btn-ghost">Settings</a>
+  </div>
+  <div class="grid g4" id="tiles"></div>
+  <div class="grid g2">
+    <div class="card">
+      <div class="card-title"><h3>Edit details</h3></div>
+      <form id="form">
+        <div class="field"><label>Name</label><input class="input" id="fName" /></div>
+        <div class="form-grid">
+          <div class="field"><label>Age</label><input class="input" type="number" id="fAge" /></div>
+          <div class="field"><label>Height (cm)</label><input class="input" type="number" id="fHeight" /></div>
+          <div class="field"><label>Target weight (kg)</label><input class="input" type="number" step="0.1" id="fTarget" /></div>
+          <div class="field"><label>Goal</label><select class="select" id="fGoal"><option value="lose">Lose weight</option><option value="maintain">Maintain</option><option value="gain">Build muscle</option></select></div>
+          <div class="field"><label>Activity</label><select class="select" id="fAct"><option value="sedentary">Sedentary</option><option value="light">Light</option><option value="moderate">Moderate</option><option value="active">Active</option><option value="athlete">Athlete</option></select></div>
+          <div class="field"><label>Diet</label><select class="select" id="fDiet"><option value="vegetarian">Vegetarian</option><option value="non-vegetarian">Non-vegetarian</option><option value="vegan">Vegan</option><option value="eggetarian">Eggetarian</option></select></div>
+        </div>
+        <button class="btn">Save changes</button>
+      </form>
+    </div>
+    <div class="card"><div class="card-title"><h3>Daily targets</h3></div><div class="list" id="targets"></div>
+      <hr class="divider" /><button class="btn btn-ghost btn-block js-logout2">Log out</button></div>
+  </div>
+</div></main>
+<script src="js/app.js"></script>
+<script src="js/auth.js"></script>
+<script>
+if (requireAuth()) {
+  const u = currentUser();
+  function render() {
+    const p = getUserProfile(), t = getTargets(), pr = getProgress();
+    $("#av").textContent = (p.name || "FP").split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase();
+    $("#name").textContent = p.name; $("#email").textContent = u.email;
+    $("#tags").innerHTML = `<span class="badge">${u.plan === "premium" ? "Premium" : "Free plan"}</span><span class="badge badge-muted">Member since ${fmtDate(u.created)}</span>`;
+    $("#tiles").innerHTML = [["Weight", pr.current + " kg"], ["BMI", pr.bmi || "—"], ["Workouts", userLogs().workouts.length], ["Streak", habitStreak() + " d"]]
+      .map(([a, b]) => `<div class="card stat-tile"><span class="label">${a}</span><span class="stat-value">${b}</span></div>`).join("");
+    $("#targets").innerHTML = [["Calories", t.calories + " kcal"], ["Protein", t.protein + " g"], ["Carbs", t.carbs + " g"], ["Fat", t.fat + " g"], ["Water", "3 L"], ["Steps", "10,000"], ["Sleep", "8 h"]]
+      .map(([a, b]) => `<div class="list-item"><span style="flex:1">${a}</span><strong>${b}</strong></div>`).join("");
+    $("#fName").value = p.name || ""; $("#fAge").value = p.age || ""; $("#fHeight").value = p.height || "";
+    $("#fTarget").value = p.targetWeight || ""; $("#fGoal").value = p.goal || "maintain"; $("#fAct").value = p.activity || "moderate"; $("#fDiet").value = p.diet || "vegetarian";
+  }
+  $("#form").onsubmit = (e) => {
+    e.preventDefault();
+    if ($("#fName").value.trim().length < 2) return toast("Enter your name.", "err");
+    saveUserProfile({ name: $("#fName").value.trim(), age: +$("#fAge").value, height: +$("#fHeight").value, targetWeight: +$("#fTarget").value, goal: $("#fGoal").value, activity: $("#fAct").value, diet: $("#fDiet").value });
+    Store.update((s) => { const x = s.users.find((v) => v.email === u.email); if (x) x.name = $("#fName").value.trim(); });
+    toast("Profile saved"); render();
+  };
+  $(".js-logout2").onclick = () => logoutUser();
+  render();
+}
+</script>
+</body>
+</html>

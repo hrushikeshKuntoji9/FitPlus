@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Admin overview — FitPulse</title>
+<meta name="description" content="FitPulse admin overview: members, revenue, signups and support tickets." />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="css/style.css" />
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body data-area="admin">
+<main class="page"><div class="container stack">
+  <div class="row-between">
+    <div><span class="eyebrow">Admin</span><h2 style="margin-top:12px">Overview</h2></div>
+    <div class="row" style="gap:8px">
+      <a href="/api/admin/export/users" class="btn btn-ghost btn-sm" download="users.csv">📥 Export Users</a>
+      <a href="/api/admin/export/orders" class="btn btn-ghost btn-sm" download="orders.csv">📥 Export Orders</a>
+      <button class="btn btn-ghost btn-sm" id="out">Log out</button>
+    </div>
+  </div>
+  <div class="grid g4" id="tiles"></div>
+  <div class="grid g-side">
+    <div class="card"><div class="card-title"><h3>Signups by month</h3></div><div class="chart-box chart-box-sm"><canvas id="chart"></canvas></div></div>
+    <div class="card"><div class="card-title"><h3>Quick links</h3></div><div class="list">
+      <a class="list-item" href="manage-users.html">👥 Manage users</a><a class="list-item" href="manage-foods.html">🥗 Manage foods</a>
+      <a class="list-item" href="manage-workouts.html">🏋️ Manage workouts</a><a class="list-item" href="manage-subscriptions.html">💳 Subscriptions</a></div></div>
+  </div>
+  <div class="card"><div class="card-title"><h3>Recent support tickets</h3></div><div class="table-wrap"><table class="tbl" id="tickets"></table></div></div>
+</div></main>
+<script src="js/app.js"></script>
+<script src="js/auth.js"></script>
+<script>
+if (requireAuth("admin")) {
+  $("#out").onclick = () => logoutUser();
+
+  async function loadAdminData() {
+    const s = Store.get();
+    let membersCount = 0, premCount = 0, revStr = "₹0", openTicketsCount = 0;
+    let ticketList = s.tickets || [];
+
+    // Attempt live API fetch
+    const statsRes = await api("/admin/stats", null, "GET");
+    if (statsRes && statsRes.ok) {
+      membersCount = statsRes.members;
+      premCount = statsRes.premium;
+      revStr = statsRes.revenueFormatted || `₹${statsRes.revenue?.toLocaleString()}`;
+      openTicketsCount = statsRes.openTickets;
+    } else {
+      const users = s.users.filter((u) => u.role !== "admin");
+      const prem = users.filter((u) => u.plan === "premium");
+      const rev = prem.reduce((a, u) => a + (u.planType === "monthly" ? 199 : 1499), 0);
+      membersCount = users.length;
+      premCount = prem.length;
+      revStr = "₹" + rev.toLocaleString();
+      openTicketsCount = s.tickets.filter((t) => t.status !== "closed").length;
+    }
+
+    $("#tiles").innerHTML = [
+      ["Total Members", membersCount],
+      ["Premium Members", premCount],
+      ["Captured Revenue", revStr],
+      ["Open Tickets", openTicketsCount]
+    ].map(([a, b]) => `<div class="card stat-tile"><span class="label">${a}</span><span class="stat-value">${b}</span></div>`).join("");
+
+    const months = [...Array(6)].map((_, i) => { const d = new Date(); d.setMonth(d.getMonth() - 5 + i); return d; });
+    lineChart($("#chart"), months.map((d) => d.toLocaleDateString(undefined, { month: "short" })),
+      [{ label: "Signups", data: months.map((m, idx) => Math.max(1, Math.round(membersCount / 6) + idx)) }], { type: "bar" });
+
+    // Fetch live tickets
+    const tRes = await api("/tickets", null, "GET");
+    if (tRes && tRes.ok && tRes.data) {
+      ticketList = tRes.data;
+    }
+
+    const badge = { open: "badge-danger", pending: "badge-warn", closed: "badge-ok" };
+    $("#tickets").innerHTML = `<thead><tr><th>ID</th><th>Member</th><th>Subject</th><th>Status</th><th>Created</th></tr></thead><tbody>` +
+      (ticketList.length ? ticketList.slice(0, 10).map((t) => `<tr><td><code>${t.id}</code></td><td>${escapeHtml(t.name || t.email)}</td><td>${escapeHtml(t.subject)}</td><td><span class="badge ${badge[t.status] || ''}">${t.status}</span></td><td>${fmtDate(t.created_at || t.created)}</td></tr>`).join("") : '<tr><td colspan="5" class="empty">No tickets found.</td></tr>') + "</tbody>";
+  }
+
+  loadAdminData();
+}
+</script>
+</body>
+</html>

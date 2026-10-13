@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Habits — FitPulse</title>
+<meta name="description" content="Check off six daily health habits and keep your FitPulse streak alive." />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+<main class="page"><div class="container stack">
+  <div><span class="eyebrow">Habits</span><h2 style="margin-top:12px">Small things, every day</h2></div>
+  <div class="grid g-side">
+    <div class="card"><div class="card-title"><h3>Today</h3><span class="badge" id="count"></span></div><div class="grid g2" id="list"></div></div>
+    <div class="card center"><div class="streak-flame">🔥</div><div class="stat-value" id="streak"></div><p class="muted small">day streak (3+ habits a day)</p><div id="ring" style="margin-top:16px"></div></div>
+  </div>
+  <div class="card"><div class="card-title"><h3>Last 14 days</h3></div><div class="table-wrap"><table class="tbl" id="grid"></table></div></div>
+</div></main>
+<script src="js/app.js"></script>
+<script src="js/auth.js"></script>
+<script>
+if (requireAuth()) {
+  function render() {
+    const h = getHabits(), done = HABITS.filter((x) => h[x.id]).length;
+    $("#count").textContent = `${done} / ${HABITS.length}`;
+    $("#streak").textContent = habitStreak();
+    $("#ring").innerHTML = ringHTML({ value: done, max: HABITS.length, size: 130, label: "today" });
+    $("#list").innerHTML = HABITS.map((x) => `<div class="habit-tile ${h[x.id] ? "done" : ""}" data-h="${x.id}"><span class="habit-check">${ICONS.check}</span><span style="font-size:1.3rem">${x.icon}</span><span class="li-title">${x.name}</span></div>`).join("");
+    $$("[data-h]").forEach((el) => el.onclick = () => { toggleHabit(el.dataset.h); render(); });
+    const days = lastNDays(14), l = userLogs();
+    $("#grid").innerHTML = `<thead><tr><th>Habit</th>${days.map((d) => `<th>${new Date(d).getDate()}</th>`).join("")}</tr></thead><tbody>` +
+      HABITS.map((x) => `<tr><td>${x.icon} ${x.name}</td>${days.map((d) => `<td>${l.habits[d]?.[x.id] ? "✅" : "·"}</td>`).join("")}</tr>`).join("") + "</tbody>";
+    animateRings();
+  }
+  render();
+}
+</script>
+</body>
+</html>

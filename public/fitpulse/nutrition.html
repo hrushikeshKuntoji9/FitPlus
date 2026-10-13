@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Nutrition — FitPulse</title>
+<meta name="description" content="Log breakfast, lunch, dinner and snacks from an Indian-first food database with full macros." />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+<main class="page"><div class="container stack">
+  <div class="row-between">
+    <div><span class="eyebrow">Nutrition</span><h2 style="margin-top:12px">Food diary</h2></div>
+    <input type="date" class="input" id="date" style="width:auto" />
+  </div>
+
+  <div class="grid g-side">
+    <div class="card"><div class="row" style="gap:26px;flex-wrap:wrap;justify-content:space-around" id="summary"></div></div>
+    <div class="card"><div class="stack" id="macros"></div></div>
+  </div>
+
+  <div class="grid g2" id="meals"></div>
+</div></main>
+
+<div class="modal" id="addModal">
+  <div class="modal-panel">
+    <div class="modal-head"><div><h3>Add food</h3><p class="small muted" id="mealLabel"></p></div><button class="icon-btn" data-close>✕</button></div>
+    <input class="input" id="search" placeholder="Search roti, paneer, banana…" />
+    <div class="chip-scroll" id="cats" style="margin:12px 0"></div>
+    <div class="list" id="results" style="max-height:340px;overflow:auto"></div>
+    <hr class="divider" />
+    <details><summary class="small bold" style="cursor:pointer">Add a custom food</summary>
+      <div class="form-grid" style="margin-top:12px">
+        <div class="field"><label>Name</label><input class="input" id="cName" /></div>
+        <div class="field"><label>Calories</label><input class="input" type="number" id="cCal" /></div>
+        <div class="field"><label>Protein g</label><input class="input" type="number" id="cPro" /></div>
+        <div class="field"><label>Carbs g</label><input class="input" type="number" id="cCarb" /></div>
+        <div class="field"><label>Fat g</label><input class="input" type="number" id="cFat" /></div>
+        <div class="field"><label>Serving</label><input class="input" id="cServ" placeholder="1 bowl" /></div>
+      </div>
+      <button class="btn btn-sm" id="cAdd">Add custom food</button>
+    </details>
+  </div>
+</div>
+
+<script src="js/app.js"></script>
+<script src="js/auth.js"></script>
+<script>
+if (requireAuth()) {
+  const MEALS = [["breakfast", "Breakfast", "🌅"], ["lunch", "Lunch", "☀️"], ["snacks", "Snacks", "🍎"], ["dinner", "Dinner", "🌙"]];
+  let date = todayKey(), activeMeal = "breakfast", foods = [], cat = "All";
+  $("#date").value = date;
+  $("#date").onchange = (e) => { date = e.target.value || todayKey(); render(); };
+
+  function render() {
+    const t = getTargets(), { meals, totals: n } = getNutrition(date);
+    $("#summary").innerHTML =
+      ringHTML({ value: n.calories, max: t.calories, size: 150, label: "eaten", display: n.calories }) +
+      `<div class="stack" style="gap:6px"><div class="stat-tile"><span class="label">Target</span><span class="stat-value">${t.calories}</span></div>
+       <div class="stat-tile"><span class="label">Remaining</span><span class="stat-value">${Math.max(0, t.calories - n.calories)}</span></div></div>`;
+    $("#macros").innerHTML = [["Protein", n.protein, t.protein], ["Carbs", n.carbs, t.carbs], ["Fat", n.fat, t.fat], ["Fibre", n.fiber, t.fiber]]
+      .map(([l, v, m]) => `<div class="metric"><div class="metric-top"><span>${l}</span><span>${v} / ${m} g</span></div><div class="bar"><i data-pct="${(v / m) * 100}"></i></div></div>`).join("");
+    $("#meals").innerHTML = MEALS.map(([k, label, icon]) => {
+      const items = meals[k] || [];
+      const kcal = Math.round(items.reduce((a, f) => a + f.calories * (f.qty || 1), 0));
+      return `<div class="card"><div class="card-title"><h3>${icon} ${label}</h3><div class="row"><span class="badge">${kcal} kcal</span><button class="btn btn-sm btn-soft" data-add="${k}">${ICONS.plus} Add</button></div></div>
+        <div class="list">${items.length ? items.map((f) => `<div class="list-item"><div style="flex:1"><div class="li-title">${escapeHtml(f.name)}</div><div class="li-sub">${escapeHtml(f.serving || "")} · P ${f.protein}g · C ${f.carbs}g · F ${f.fat}g</div></div><strong class="small">${f.calories}</strong><button class="icon-btn" data-del="${k}|${f.logId}" aria-label="Remove">✕</button></div>`).join("") : `<p class="small muted">Nothing logged yet.</p>`}</div></div>`;
+    }).join("");
+    $$("[data-add]").forEach((b) => b.onclick = () => openAdd(b.dataset.add));
+    $$("[data-del]").forEach((b) => b.onclick = () => { const [m, id] = b.dataset.del.split("|"); removeFood(m, id, date); toast("Removed"); render(); });
+    animateRings(); animateBars();
+  }
+
+  async function openAdd(meal) {
+    activeMeal = meal;
+    $("#mealLabel").textContent = "Adding to " + meal;
+    if (!foods.length) foods = await getFoods().catch(() => []);
+    const cats = ["All", ...new Set(foods.map((f) => f.category))];
+    $("#cats").innerHTML = cats.map((c) => `<button class="chip ${c === cat ? "active" : ""}" data-cat="${c}">${c}</button>`).join("");
+    $$("[data-cat]").forEach((b) => b.onclick = () => { cat = b.dataset.cat; $$("[data-cat]").forEach((x) => x.classList.toggle("active", x === b)); list(); });
+    $("#search").value = ""; list(); openModal("#addModal"); $("#search").focus();
+  }
+  function list() {
+    const q = $("#search").value.toLowerCase();
+    const r = foods.filter((f) => (cat === "All" || f.category === cat) && f.name.toLowerCase().includes(q)).slice(0, 40);
+    $("#results").innerHTML = r.length ? r.map((f, i) => `<div class="list-item"><div style="flex:1"><a href="food-detail.html?id=${f.id || ''}&name=${encodeURIComponent(f.name)}" class="li-title bold" style="color:inherit">${escapeHtml(f.name)}</a><div class="li-sub">${escapeHtml(f.serving)} · ${f.calories} kcal · P ${f.protein}g</div></div><div class="row" style="gap:6px"><a href="food-detail.html?id=${f.id || ''}&name=${encodeURIComponent(f.name)}" class="btn btn-sm btn-ghost">Info</a><button class="btn btn-sm" data-pick="${foods.indexOf(f)}">Add</button></div></div>`).join("") : `<div class="empty">No foods match.</div>`;
+    $$("[data-pick]").forEach((b) => b.onclick = () => { const f = foods[b.dataset.pick]; addFood(activeMeal, { name: f.name, calories: f.calories, protein: f.protein, carbs: f.carbs, fat: f.fat, fiber: f.fiber || 0, serving: f.serving }, date); toast(f.name + " added"); closeModal("#addModal"); render(); });
+  }
+  $("#search").oninput = list;
+  $("#cAdd").onclick = () => {
+    const name = $("#cName").value.trim(), cal = Number($("#cCal").value);
+    if (!name || !cal) return toast("Enter a name and calories.", "err");
+    addFood(activeMeal, { name, calories: cal, protein: +$("#cPro").value || 0, carbs: +$("#cCarb").value || 0, fat: +$("#cFat").value || 0, fiber: 0, serving: $("#cServ").value || "1 serving" }, date);
+    toast(name + " added"); closeModal("#addModal"); render();
+  };
+  render();
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Privacy Policy — FitPulse Pro</title>
+<meta name="description" content="FitPulse Privacy Policy: how we securely handle, protect, and respect your personal health and nutrition data." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body data-footer="on">
+<main class="page">
+  <div class="container stack" style="max-width:860px;margin-inline:auto">
+    <div style="padding:20px 0">
+      <a href="index.html" class="small muted">← Back to home</a>
+      <span class="eyebrow" style="display:block;margin-top:14px">Legal & Security</span>
+      <h1 style="margin:12px 0 10px;font-size:clamp(2rem,4vw,3rem)">Privacy Policy</h1>
+      <p class="lead small">Last updated: October 2026 · Effective immediately</p>
+    </div>
+
+    <div class="card card-pad-lg stack" style="gap:24px">
+      <section>
+        <h3>1. Our Commitment to Health Data Privacy</h3>
+        <p style="margin-top:8px">At FitPulse, we believe your fitness, nutrition, and metabolic metrics are deeply personal. We never sell, rent, or monetize your health data to third-party data brokers or advertisers. FitPulse is funded transparently through optional Premium memberships.</p>
+      </section>
+
+      <section>
+        <h3>2. Information We Collect</h3>
+        <ul class="list" style="margin-top:10px">
+          <li class="list-item"><strong>Account Credentials:</strong> Name, email address, and cryptographically salted password hashes (never plaintext).</li>
+          <li class="list-item"><strong>Health & Biometrics:</strong> Age, height, body weight, goal weight, gender, dietary preferences, and target macro goals.</li>
+          <li class="list-item"><strong>Tracking Logs:</strong> Daily food items, hydration intake, sleep duration, step counts, habit checks, and completed workouts.</li>
+          <li class="list-item"><strong>Support & Enquiries:</strong> Inquiries and tickets submitted to our technical support desk.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h3>3. How Your Data is Used</h3>
+        <p style="margin-top:8px">Your data is utilized solely to power your personalized fitness intelligence:</p>
+        <ul class="list" style="margin-top:8px">
+          <li class="list-item">To calculate accurate Basal Metabolic Rates (BMR) and Total Daily Energy Expenditure (TDEE).</li>
+          <li class="list-item">To generate context-aware guidance via your personalized AI Coach.</li>
+          <li class="list-item">To display historical streak timelines and progress analytics.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h3>4. Security & Storage Architecture</h3>
+        <p style="margin-top:8px">We enforce enterprise-grade security standards across our application:</p>
+        <ul class="list" style="margin-top:8px">
+          <li class="list-item"><strong>Password Hashing:</strong> Multi-round scrypt and bcrypt cryptographic key derivation with per-user salt.</li>
+          <li class="list-item"><strong>Session Security:</strong> Cryptographically random 256-bit session tokens stored with <code>HttpOnly</code>, <code>SameSite</code> protection.</li>
+          <li class="list-item"><strong>Access Control:</strong> Strict user-isolation SQL parameterization preventing unauthorized cross-tenant data access.</li>
+          <li class="list-item"><strong>Brute Force Prevention:</strong> Active IP and credential rate-limiting guards against automated attacks.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h3>5. Payment Processing</h3>
+        <p style="margin-top:8px">Payments are processed securely via PCI-DSS Level 1 compliant payment gateways (Razorpay). FitPulse servers never store, process, or view your complete credit card numbers, CVVs, or UPI PINs.</p>
+      </section>
+
+      <section>
+        <h3>6. Your Rights & Data Portability</h3>
+        <p style="margin-top:8px">You maintain absolute ownership of your data:</p>
+        <ul class="list" style="margin-top:8px">
+          <li class="list-item"><strong>Data Export:</strong> You may request a complete CSV/JSON export of all your logged metrics.</li>
+          <li class="list-item"><strong>Account Deletion:</strong> You can request full erasure of your account and all associated logs by submitting a ticket through our <a href="support.html" style="color:var(--accent)">Support Center</a>.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h3>7. Contact Our Privacy Officer</h3>
+        <p style="margin-top:8px">For privacy inquiries, audit verification, or data subject requests, email <a href="mailto:privacy@fitpulse.app" style="color:var(--accent)">privacy@fitpulse.app</a> or reach out through our <a href="contact.html" style="color:var(--accent)">Contact Page</a>.</p>
+      </section>
+    </div>
+  </div>
+</main>
+<script src="js/app.js"></script>
+<script src="js/auth.js"></script>
+</body>
+</html>

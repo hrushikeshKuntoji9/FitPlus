@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>FitPulse — Nutrition, training and recovery in one calm app</title>
+<meta name="description" content="FitPulse tracks your food, workouts, water, sleep and habits, then coaches you with AI. A premium health companion built for consistency." />
+<meta property="og:title" content="FitPulse — Nutrition, training and recovery" />
+<meta property="og:description" content="Nutrition, training and recovery in one daily score with FitPulse." />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary_large_image" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body data-footer="on">
+
+<section class="hero">
+  <div class="container hero-grid">
+    <div>
+      <span class="eyebrow">Your health, measured properly</span>
+      <h1>Train, eat and recover with <span class="gradient-text">one clear number</span> each day.</h1>
+      <p class="lead">FitPulse brings nutrition, workouts, water, sleep and habits into a single daily score — then an AI coach tells you exactly what to fix next.</p>
+      <div class="hero-proof" style="margin-top: 30px;">
+        <div><span class="stat-value" data-count="120" data-suffix="k+">0</span><span class="muted small">Meals logged</span></div>
+        <div><span class="stat-value" data-count="38" data-suffix="k">0</span><span class="muted small">Workouts finished</span></div>
+        <div><span class="stat-value" data-count="4.9" data-decimals="1">0</span><span class="muted small">Average rating</span></div>
+      </div>
+    </div>
+    
+    <div class="auth-card card card-pad-lg" style="background: var(--surface-solid); border: 2px solid var(--border); box-shadow: var(--shadow-xl); padding: 32px; border-radius: 20px;">
+      <h3 style="margin-bottom: 6px; font-size: 1.6rem;">Get Started</h3>
+      <p class="small muted" style="margin-bottom: 24px; font-size: 0.95rem;">Log in, sign up, or jump right into the demo.</p>
+      
+      <div class="stack" style="gap: 14px;" id="authWidget">
+        <a href="login.html" class="btn btn-block btn-lg" style="justify-content: center;">Log in to your account</a>
+        <a href="register.html" class="btn btn-block btn-lg btn-ghost" style="justify-content: center; border-color: var(--border);">Create a free account</a>
+        
+        <div class="or-line" style="margin: 12px 0;">or explore instantly</div>
+        
+        <button class="btn btn-block btn-lg btn-soft" id="quickDemoBtn" style="justify-content: center;">Load Demo Account</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <div class="center" style="max-width:620px;margin-inline:auto">
+      <span class="eyebrow">Everything in one place</span>
+      <h2 style="margin:16px 0 12px">Six trackers that actually talk to each other</h2>
+      <p class="lead">No more juggling four apps. Every log feeds your score, your trends and your coach.</p>
+    </div>
+    <div class="grid g3 reveal" style="margin-top:40px" id="featureGrid"></div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container grid g-side reveal">
+    <div class="card card-pad-lg">
+      <span class="eyebrow">AI Coach</span>
+      <h2 style="margin:16px 0 12px">Ask anything. Get an answer shaped by your own data.</h2>
+      <p class="lead">"Why did my weight stall?" "What should I eat after a 7pm workout?" The coach reads your last 30 days before it replies.</p>
+      <div class="stack" style="margin-top:22px">
+        <div class="msg me"><div class="bubble">I trained hard today but I'm 400 calories under. Should I eat more?</div></div>
+        <div class="msg ai"><div class="bubble">Yes — you burned 320 kcal in Full Body Strength and you're at 62 g protein of 125 g. A curd bowl with sprouts closes both gaps without pushing you over.</div></div>
+      </div>
+      <a href="ai-coach.html" class="btn" style="margin-top:24px">Open AI Coach</a>
+    </div>
+    <div class="stack">
+      <div class="card"><h3>Indian food database</h3><p class="lead small" style="margin-top:8px">Roti, poha, sambar, chole — real portions, real macros, no guessing grams of "generic flatbread".</p></div>
+      <div class="card"><h3>Habits &amp; streaks</h3><p class="lead small" style="margin-top:8px">Six daily habits, one streak counter, and gentle badges that reward showing up.</p></div>
+      <div class="card"><h3>Progress you can read</h3><p class="lead small" style="margin-top:8px">Weight, BMI, calories and steps over 7, 30 or 90 days in charts that don't lie with their axes.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <div class="center"><span class="eyebrow">Loved by members</span><h2 style="margin-top:16px">Consistency, not crash diets</h2></div>
+    <div class="grid g3 reveal" style="margin-top:36px">
+      <div class="card"><div class="stars">★★★★★</div><p class="quote" style="margin:12px 0">"First app where logging Indian home food takes ten seconds. Down 6 kg without weighing every bite."</p><strong class="small">Ishita R.</strong></div>
+      <div class="card"><div class="stars">★★★★★</div><p class="quote" style="margin:12px 0">"The daily score keeps me honest. I can see a bad sleep week before it shows up on the scale."</p><strong class="small">Kabir M.</strong></div>
+      <div class="card"><div class="stars">★★★★★</div><p class="quote" style="margin:12px 0">"The coach reads my actual logs. It told me my protein was the problem, and it was right."</p><strong class="small">Rohan G.</strong></div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container container-narrow">
+    <div class="center"><span class="eyebrow">FAQ</span><h2 style="margin-top:16px">Questions people ask first</h2></div>
+    <div style="margin-top:28px" id="faqList"></div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <div class="card card-accent card-pad-lg center">
+      <h2>Start today. Your first score takes two minutes.</h2>
+      <p style="margin:12px 0 22px">Free forever for core tracking. Premium adds the AI coach and meal plans.</p>
+      <div class="row" style="justify-content:center">
+        <a href="register.html" class="btn btn-dark btn-lg">Create free account</a>
+        <a href="subscription.html" class="btn btn-ghost btn-lg" style="border-color:rgba(0,0,0,.25)">See pricing</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script src="js/app.js"></script>
+<script src="js/auth.js"></script>
+<script>
+  const FEATURES = [
+    ["nutrition", "Nutrition tracking", "Search a food, tap add. Macros, fibre and calories update instantly across your day."],
+    ["workout", "Workout library", "Strength, HIIT, yoga and cardio sessions with exercise lists and calorie estimates."],
+    ["water", "Water &amp; hydration", "Quick-add glasses, a live target ring, and a weekly hydration trend."],
+    ["sleep", "Sleep logging", "Bedtime, wake time and hours — matched against how you performed the next day."],
+    ["habit", "Habit streaks", "Six habits, one tap each. Miss a day and the streak tells you the truth."],
+    ["progress", "Progress analytics", "Weight, BMI and calorie trends over any window, plus goal completion."],
+  ];
+  $("#featureGrid").innerHTML = FEATURES.map(([icon, title, body]) =>
+    `<div class="card card-hover feature-card"><div class="feature-icon">${ICONS[icon]}</div><h3>${title}</h3><p>${body}</p></div>`).join("");
+
+  const FAQS = [
+    ["Is FitPulse free?", "Yes. Tracking food, workouts, water, sleep and habits is free. Premium unlocks the AI coach, meal plans and advanced analytics."],
+    ["How does data storage work?", "FitPulse runs a full-stack REST API with SQLite database persistence and instant offline caching. Your logs and streaks are always safe and synchronized."],
+    ["Can I log Indian meals?", "That's the point. The food database is built around roti, dal, poha, idli, sambar and more, with sensible household servings."],
+    ["Can I cancel premium anytime?", "Yes, from the Subscription page. You keep premium until the end of the paid period."],
+  ];
+  $("#faqList").innerHTML = FAQS.map(([q, a]) =>
+    `<div class="faq-item"><button class="faq-q">${q}${ICONS.plus}</button><div class="faq-a"><p>${a}</p></div></div>`).join("");
+  $$(".faq-q").forEach((b) => b.addEventListener("click", () => b.closest(".faq-item").classList.toggle("open")));
+
+  if (isLoggedIn()) {
+    const user = currentUser();
+    $("#authWidget").innerHTML = `
+      <p class="lead small" style="text-align:center;margin-bottom:14px">Welcome back, ${escapeHtml(user?.name?.split(" ")[0] || "Athlete")}!</p>
+      <a href="${isAdmin() ? 'admin.html' : 'dashboard.html'}" class="btn btn-block btn-lg" style="justify-content:center">Go to Dashboard</a>
+      <button class="btn btn-block btn-ghost js-logout" style="justify-content:center;margin-top:12px;border-color:var(--border)">Log out</button>
+    `;
+  } else {
+    $("#quickDemoBtn")?.addEventListener("click", async () => {
+      const btn = $("#quickDemoBtn");
+      btn.disabled = true;
+      btn.textContent = "Loading...";
+      const res = await loginUser({ email: "demo@fitpulse.app", password: "demo1234", remember: false });
+      if (res && res.ok) location.replace("dashboard.html");
+      else { toast(res?.error || "Error accessing demo.", "err"); btn.disabled = false; btn.textContent = "Load Demo Account"; }
+    });
+  }
+</script>
+</body>
+</html>

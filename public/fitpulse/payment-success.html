@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Payment successful — FitPulse</title>
+<meta name="description" content="Your FitPulse Premium payment was confirmed." />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+<main class="page">
+  <div class="container" style="max-width:640px">
+    <div class="card card-pad-lg center">
+      <h1>Payment confirmed</h1>
+      <p class="lead" id="msg">Your membership is active after server-side verification. This page alone does not mark an order as paid.</p>
+      <p class="small muted" id="meta"></p>
+      <div class="row" style="justify-content:center;margin-top:24px">
+        <a href="dashboard.html" class="btn btn-lg">Go to dashboard</a>
+        <a href="subscription.html" class="btn btn-ghost btn-lg">View membership</a>
+      </div>
+    </div>
+  </div>
+</main>
+<script src="js/app.js"></script>
+<script src="js/auth.js"></script>
+<script>
+(async () => {
+  const q = new URLSearchParams(location.search);
+  const orderId = q.get("order_id") || q.get("orderId");
+  if (!orderId) return;
+  $("#meta").textContent = "Order " + orderId;
+  const sub = await api("/subscription", null, "GET");
+  if (sub && sub.ok && sub.plan === "premium") {
+    $("#msg").textContent = "Premium is active until " + (sub.planExpiry || "the end of your billing period") + ".";
+  }
+})();
+</script>
+</body>
+</html>
