@@ -14,15 +14,13 @@ echo.
 echo Step 1: Create a new repository on GitHub:
 echo         https://github.com/new
 echo.
-echo Step 2: Paste your GitHub repository URL below
-echo         (e.g., https://github.com/yourusername/fitpulse.git)
+set DEFAULT_URL=https://github.com/hrushikeshKuntoji9/FitPlus.git
+echo Target Repository: %DEFAULT_URL%
 echo.
-set /p REPO_URL="Enter GitHub Repo URL: "
+set /p REPO_URL="Press Enter to push to this repo, or paste a new URL: "
 
 if "%REPO_URL%"=="" (
-    echo [ERROR] No URL entered. Aborted.
-    pause
-    exit /b 1
+    set REPO_URL=%DEFAULT_URL%
 )
 
 echo.
@@ -32,18 +30,19 @@ echo Connecting remote origin to: %REPO_URL%
 
 echo.
 echo Pushing branch 'main' to GitHub...
+echo (If a GitHub login dialog appears, click 'Sign in with your browser')
 "C:\Program Files\Git\cmd\git.exe" push -u origin main
 
 if %ERRORLEVEL% EQU 0 (
     echo.
     echo =====================================================================
-    echo [SUCCESS] Your repository is now live on GitHub!
-    echo You can now connect it directly to Render.com or Railway.
+    echo [SUCCESS] Your repository is now LIVE on GitHub!
+    echo URL: %REPO_URL%
     echo =====================================================================
 ) else (
     echo.
-    echo [NOTE] If prompted for GitHub login, enter your GitHub Personal Access Token
-    echo or sign in via browser.
+    echo [NOTE] If authentication failed, you can generate a Personal Access Token:
+    echo        https://github.com/settings/tokens
 )
 
 pause
