@@ -835,7 +835,7 @@ def _demo_payments_allowed():
         return False
     if app.testing:
         return True
-    if FLASK_ENV == "production":
+    if FLASK_ENV == "production" and not ALLOW_DEMO_PAYMENTS:
         return False
     return ALLOW_DEMO_PAYMENTS
 
